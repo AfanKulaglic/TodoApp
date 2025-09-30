@@ -1,0 +1,831 @@
+/* globals.css - reset i layout */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  background-color: #0f111a;
+  color: #e0e0e0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Navigacija */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: rgba(20, 25, 50, 0.9);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  z-index: 10;
+  border-bottom: 1px solid rgba(0,255,255,0.2);
+}
+
+nav a {
+  color: #b0b0b0;
+  text-decoration: none;
+  margin: 0 1rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+nav a:hover {
+  color: #808080;
+}
+
+/* Main content */
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  padding: 0; /* nema dodatnog paddinga */
+}
+
+/* Scrollbar */
+main::-webkit-scrollbar {
+  width: 8px;
+}
+
+main::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+}
+
+main::-webkit-scrollbar-thumb {
+  background: rgba(0,255,255,0.3);
+  border-radius: 4px;
+}
+
+/* Futuristic Login Card */
+.section-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 1rem;
+}
+
+.card {
+  background: rgba(20, 25, 50, 0.85);
+  backdrop-filter: blur(10px);
+  padding: 2.5rem 3rem;
+  border-radius: 16px;
+  border: 1px solid rgba(0,255,255,0.2);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(0,255,255,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 0 30px rgba(0,255,255,0.2);
+}
+
+.card h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: #b0b0b0;
+  text-shadow: 0 0 6px rgba(0,255,255,0.3);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.input {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid rgba(0,255,255,0.3);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.4);
+  color: #b0b0b0;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input::placeholder {
+  color: rgba(0,255,255,0.5);
+}
+
+.input:focus {
+  border-color: #b0b0b0;
+  box-shadow: 0 0 8px #b0b0b0;
+  background: rgba(0,0,0,0.6);
+}
+
+.button {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f111a;
+  background: linear-gradient(90deg, #b0b0b0, #808080);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,255,255,0.2);
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 16px rgba(0,255,255,0.4);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 2rem 1.5rem;
+  }
+
+  .card h1 {
+    font-size: 1.5rem;
+  }
+
+  .input, .button {
+    font-size: 0.95rem;
+  }
+}
+
+
+/* Profiles Page Styling */
+.profiles-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 100%;
+  padding: 2rem;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #0d0f1a, #1b1e2c);
+  font-family: 'Orbitron', sans-serif;
+}
+
+.profiles-card {
+  background: rgba(20, 25, 50, 0.85);
+  backdrop-filter: blur(12px);
+  padding: 2.5rem 3rem;
+  border-radius: 16px;
+  border: 1px solid rgba(0,255,255,0.2);
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 0 25px rgba(0,255,255,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profiles-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 35px rgba(0,255,255,0.2);
+}
+
+.profiles-card h1 {
+  font-size: 2rem;
+  color: #b0b0b0;
+  text-shadow: 0 0 6px rgba(0,255,255,0.3);
+  margin-bottom: 1rem;
+}
+
+.user-email {
+  font-size: 0.95rem;
+  color: rgba(0,255,255,0.7);
+  margin-bottom: 1.5rem;
+}
+
+.profiles-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 20, 40, 0.7);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,255,0.2);
+  box-shadow: 0 0 10px rgba(0,255,255,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0,255,255,0.2);
+}
+
+.profile-name {
+  font-size: 1rem;
+  color: #b0b0b0;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.button-small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.button-danger {
+  background: linear-gradient(90deg, #ff4b5c, #ff1f3b);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(255,75,92,0.2);
+}
+
+.button-danger:hover {
+  box-shadow: 0 0 16px rgba(255,75,92,0.4);
+  background: linear-gradient(90deg, #ff4b5c, #ff1f3b);
+}
+
+.add-profile {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .profiles-card {
+    padding: 2rem 1.5rem;
+    max-width: 100%;
+  }
+
+  .profile-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .profile-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .button-small {
+    width: 100px;
+  }
+}
+
+
+/* Admin Page Styling */
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+  width: 100%;
+  min-height: 100%;
+  background: linear-gradient(135deg, #0d0f1a, #1b1e2c);
+  font-family: 'Orbitron', sans-serif;
+  box-sizing: border-box;
+}
+
+.admin-page h1 {
+  font-size: 2rem;
+  color: #b0b0b0;
+  text-shadow: 0 0 6px rgba(0,255,255,0.3);
+  margin-bottom: 1rem;
+}
+
+/* User card container */
+.admin-user-card {
+  background: rgba(20, 25, 50, 0.85);
+  backdrop-filter: blur(12px);
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(0,255,255,0.2);
+  box-shadow: 0 0 20px rgba(0,255,255,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.admin-user-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 30px rgba(0,255,255,0.2);
+}
+
+/* Profile list */
+.admin-user-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-user-card li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 20, 40, 0.7);
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,255,0.2);
+  box-shadow: 0 0 10px rgba(0,255,255,0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-user-card li:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(0,255,255,0.1);
+}
+
+/* Profile username */
+.admin-user-card li span {
+  color: #b0b0b0;
+  font-weight: 500;
+}
+
+/* Buttons */
+.admin-user-card li button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0d0f1a;
+  background: linear-gradient(90deg, #b0b0b0, #808080);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,255,255,0.2);
+  transition: all 0.3s ease;
+}
+
+.admin-user-card li button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 16px rgba(0,255,255,0.4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-user-card li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .admin-user-card li button {
+    width: 100%;
+  }
+}
+
+
+/* Admin Dashboard - Zadaci */
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+  width: 100%;
+  min-height: 100%;
+  background: linear-gradient(135deg, #0d0f1a, #1b1e2c);
+  font-family: 'Orbitron', sans-serif;
+  box-sizing: border-box;
+}
+
+.admin-dashboard h1 {
+  font-size: 2rem;
+  color: #b0b0b0;
+  text-shadow: 0 0 6px rgba(0,255,255,0.3);
+  margin-bottom: 1rem;
+}
+
+/* Novi zadatak form */
+.task-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.task-form input[type="text"] {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,255,0.3);
+  background: rgba(15,20,40,0.7);
+  color: #b0b0b0;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.task-form input[type="text"]::placeholder {
+  color: rgba(0,255,255,0.5);
+}
+
+.task-form input[type="text"]:focus {
+  border-color: #b0b0b0;
+  box-shadow: 0 0 8px #b0b0b0;
+  background: rgba(15,20,40,0.9);
+}
+
+.task-form button {
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  background: linear-gradient(90deg, #b0b0b0, #808080);
+  color: #0d0f1a;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,255,255,0.2);
+  transition: all 0.3s ease;
+}
+
+.task-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 16px rgba(0,255,255,0.4);
+}
+
+/* Lista zadataka */
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.task-item {
+  background: rgba(20,25,50,0.85);
+  backdrop-filter: blur(12px);
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(0,255,255,0.2);
+  box-shadow: 0 0 15px rgba(0,255,255,0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px rgba(0,255,255,0.2);
+}
+
+.task-item strong {
+  color: #b0b0b0;
+}
+
+/* Edit input fields */
+.task-item input[type="text"] {
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0,255,255,0.3);
+  background: rgba(15,20,40,0.7);
+  color: #b0b0b0;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.task-item input[type="text"]:focus {
+  border-color: #b0b0b0;
+  box-shadow: 0 0 8px #b0b0b0;
+  background: rgba(15,20,40,0.9);
+}
+
+/* Task buttons */
+.task-item button {
+  margin-left: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(90deg, #b0b0b0, #808080);
+  color: #0d0f1a;
+  box-shadow: 0 0 8px rgba(0,255,255,0.2);
+  transition: all 0.3s ease;
+}
+
+.task-item button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(0,255,255,0.4);
+}
+
+.task-item button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Revisions list */
+.revisions-list {
+  margin-top: 0.5rem;
+  margin-left: 1.5rem;
+  font-size: 12px;
+  color: rgba(200,200,200,0.7);
+}
+
+.revisions-list li {
+  margin-bottom: 2px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .task-form {
+    flex-direction: column;
+  }
+
+  .task-item {
+    flex-direction: column;
+  }
+
+  .task-item button {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+}
+
+
+/* Admin Dashboard Page */
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+  width: 100%;
+  min-height: 100%;
+  background: linear-gradient(135deg, #0d0f1a, #1b1e2c);
+  font-family: 'Orbitron', sans-serif;
+  box-sizing: border-box;
+}
+
+.admin-dashboard h1 {
+  font-size: 2rem;
+  color: #b0b0b0;
+  text-shadow: 0 0 6px rgba(0,255,255,0.3);
+  margin-bottom: 1.5rem;
+}
+
+.revisions-dropdown {
+  display: none;
+  margin-left: 20px;
+  margin-top: 5px;
+  font-size: 12px;
+  color: gray;
+  list-style: none;
+}
+
+.revisions-dropdown.open {
+  display: block;
+}
+
+.revisions-toggle {
+  cursor: pointer;
+  display: inline-block;
+  margin-left: 10px;
+  transform: rotate(0deg);
+  transition: transform 0.3s ease;
+}
+
+.revisions-dropdown.open + .revisions-toggle,
+.revisions-toggle.active {
+  transform: rotate(90deg); /* strelica se rotira kada se otvori */
+}
+
+.task-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+  position: relative;
+}
+
+.task-info {
+  display: inline-block;
+  margin-right: 10px;
+  padding-top: 15px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 5px;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  align-items: center;
+}
+
+.revisions-dropdown {
+  display: none;
+  font-size: 12px;
+  color: gray;
+  list-style: none;
+  padding-left: 20px;
+}
+
+.revisions-dropdown.open {
+  display: block;
+}
+
+.revisions-toggle {
+  cursor: pointer;
+  font-weight: bold;
+  user-select: none;
+}
+
+
+
+/* Dodavanje zadatka */
+.task-add-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: rgba(20,25,50,0.7);
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(0,255,255,0.2);
+  box-shadow: 0 0 15px rgba(0,255,255,0.1);
+}
+
+.task-add-form input {
+  flex: 1 1 200px;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  border: 1.5px solid rgba(0,255,255,0.3);
+  background: rgba(0,0,0,0.5);
+  color: #b0b0b0;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.task-add-form input::placeholder {
+  color: rgba(0,255,255,0.6);
+}
+
+.task-add-form input:focus {
+  border-color: #b0b0b0;
+  box-shadow: 0 0 10px #b0b0b0;
+  background: rgba(0,0,0,0.7);
+}
+
+.task-add-form button {
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(90deg, #b0b0b0, #808080);
+  color: #0d0f1a;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px #b0b0b0;
+}
+
+.task-add-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px #b0b0b0;
+}
+
+.button-danger {
+  background-color: red;
+}
+
+/* Lista zadataka */
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.task-item {
+  background: rgba(15, 20, 40, 0.7);
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(0,255,255,0.2);
+  box-shadow: 0 0 10px rgba(0,255,255,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0,255,255,0.2);
+}
+
+/* Task content */
+.task-item strong {
+  color: #b0b0b0;
+}
+
+.task-item button {
+  margin-left: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  background: linear-gradient(90deg, #b0b0b0, #808080);
+  color: #0d0f1a;
+  box-shadow: 0 0 8px #b0b0b0;
+  transition: all 0.3s ease;
+}
+
+.task-item button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px #b0b0b0;
+}
+
+/* Edit mode inputs */
+.task-item input[type="text"] {
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0,255,255,0.3);
+  background: rgba(0,0,0,0.5);
+  color: #b0b0b0;
+  outline: none;
+  margin-right: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.task-item input[type="text"]:focus {
+  border-color: #b0b0b0;
+  box-shadow: 0 0 10px #b0b0b0;
+  background: rgba(0,0,0,0.7);
+}
+
+/* Revisions */
+.task-item .revisions {
+  margin-left: 1rem;
+  margin-top: 0.5rem;
+  font-size: 12px;
+  color: #aaa;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .task-add-form {
+    flex-direction: column;
+  }
+
+  .task-add-form input {
+    flex: 1 1 100%;
+  }
+
+  .task-item {
+    padding: 0.75rem;
+  }
+}
+
+
+/* Stilizovani checkbox */
+input[type="checkbox"] {
+  appearance: none; /* uklanja default browser stil */
+  width: 20px;
+  height: 20px;
+  border: 2px solid #808080; /* tamno-siva granica */
+  border-radius: 6px;
+  background-color: #f0f0f0; /* svijetlo-siva pozadina */
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+input[type="checkbox"]:hover {
+  border-color: #00aaff;
+  box-shadow: 0 0 5px #00aaff;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #00aaff; /* tamno-siva kad je checked */
+  border-color: #b0b0b0;
+}
+
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  width: 4px;
+  height: 10px;
+  border: solid #f0f0f0; /* svijetlo-siva check mark */
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+
+
