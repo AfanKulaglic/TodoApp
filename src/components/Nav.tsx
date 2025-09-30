@@ -9,7 +9,6 @@ export default function Nav() {
       <div className="nav-container">
         <Link href="/login" className="nav-link">Prijava</Link>
         <Link href="/register" className="nav-link">Registracija</Link>
-        <Link href="/dashboard" className="nav-link nav-dashboard">Dashboard</Link>
       </div>
     </nav>
   )

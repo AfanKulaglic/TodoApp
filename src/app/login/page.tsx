@@ -32,13 +32,27 @@ export default function LoginPage() {
       return;
     }
 
+    const { data: roleData, error: roleError } = await supabase
+      .from("roles")
+      .select("role")
+      .eq("account_id", data.user.id)
+      .single();
+
+    if (roleError) {
+      console.log("Greška pri dohvaćanju role:", roleError.message);
+    }
     console.log("Uspješna prijava:", data);
 
     setLoading(false);
-    router.push("/profiles"); // redirect na profiles bez provjere role
+
+    if (roleData?.role === "superadmin") {
+      router.push("/adminProfiles");
+    } else {
+      router.push("/profiles");
+    }
   }
 
-  return (
+  return (    
     <div className="section-center">
       <div className="card">
         <h1>Prijava</h1>

@@ -48,7 +48,7 @@ export default function AdminTodosPage() {
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
 
-  // Dohvati odabrani profil
+  
   useEffect(() => {
     if (!profileIdFromUrl) return;
 
@@ -66,7 +66,7 @@ export default function AdminTodosPage() {
     fetchProfile();
   }, [profileIdFromUrl]);
 
-  // Dohvati zadatke i revizije za taj profil
+  
   useEffect(() => {
     if (!profileIdFromUrl) return;
 
@@ -80,7 +80,7 @@ export default function AdminTodosPage() {
       if (taskError) console.error(taskError);
       else setTasks(taskData || []);
 
-      // Dohvati revizije za zadatke ovog profila
+      
       const { data: revData, error: revError } = await supabase
         .from("revisions")
         .select("*, profile_id")
@@ -93,7 +93,7 @@ export default function AdminTodosPage() {
         return;
       }
 
-      // Dohvati sve profile da možemo spojiti username
+      
       const { data: allProfiles } = await supabase
         .from("profiles")
         .select("id, username");
@@ -124,7 +124,7 @@ export default function AdminTodosPage() {
     else if (data && data[0]) {
       setTasks([...tasks, data[0]]);
 
-      // Zabilježi reviziju
+      
       await supabase.from("revisions").insert([{
         task_id: data[0].id,
         profile_id: profileIdFromUrl,

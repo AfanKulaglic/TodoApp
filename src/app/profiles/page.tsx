@@ -19,7 +19,6 @@ export default function ProfilesPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const router = useRouter()
 
-  // Dohvati logovanog korisnika i učitaj profile
   useEffect(() => {
     const getUserAndProfiles = async () => {
       const {
@@ -50,7 +49,6 @@ export default function ProfilesPage() {
     getUserAndProfiles()
   }, [])
 
-  // Dodaj profil
   const handleAddProfile = async () => {
     if (!userId) return
     if (profiles.length >= 3) {
@@ -65,7 +63,6 @@ export default function ProfilesPage() {
   
     setLoading(true)
   
-    // 1️⃣ Dodaj profil
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .insert([{ account_id: userId, username: newUsername }])
@@ -82,7 +79,6 @@ export default function ProfilesPage() {
       return
     }
   
-    // 2️⃣ Dodaj u roles tabelu (default 'user')
     const { error: roleError } = await supabase
       .from("roles")
       .insert([{ account_id: userId, role: "user" }])
@@ -93,14 +89,12 @@ export default function ProfilesPage() {
       console.error("Greška pri dodavanju role:", roleError)
       alert("Profil je kreiran, ali nije dodana uloga korisnika.")
     } else {
-      // Uspješno dodano i u roles tabelu
+      
       setProfiles([...profiles, ...(profileData || [])])
       setNewUsername("")
     }
   }
   
-
-  // Izbriši profil
   const handleDeleteProfile = async (id: string) => {
     const { error } = await supabase.from("profiles").delete().eq("id", id)
 
@@ -112,7 +106,6 @@ export default function ProfilesPage() {
     }
   }
 
-  // Otvori profil → redirect na /todos/[id]
   const handleOpenProfile = (id: string) => {
     sessionStorage.setItem("selectedProfileId", id)
     router.push("/todos")

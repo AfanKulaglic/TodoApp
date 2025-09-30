@@ -46,7 +46,7 @@ export default function TodosPage() {
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
 
-  // Dohvati logovanog korisnika i profile
+  
   useEffect(() => {
     const fetchUserAndProfiles = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -71,7 +71,7 @@ export default function TodosPage() {
     fetchUserAndProfiles();
   }, []);
 
-  // Dohvati zadatke za odabrani profil
+  
   useEffect(() => {
     if (!selectedProfileId) return;
 
@@ -89,7 +89,7 @@ export default function TodosPage() {
     fetchTasks();
   }, [selectedProfileId]);
 
-  // Dodaj zadatak
+  
   const handleAddTask = async () => {
     if (!newTitle.trim() || !selectedProfileId) return;
     setLoading(true);
@@ -116,7 +116,7 @@ export default function TodosPage() {
     setNewDescription("");
   };
 
-  // Toggle status zadatka
+  
   const toggleTaskStatus = async (task: Task) => {
     const newStatus = task.status === "done" ? "pending" : "done";
 
@@ -136,21 +136,21 @@ export default function TodosPage() {
     } else console.error(error);
   };
 
-  // Brisanje zadatka: revizija + fizičko brisanje
+  
   const handleDeleteTask = async (task: Task) => {
     if (!task) return;
   
     try {
-      // 1. Ubaci reviziju koja pamti podatke zadatka
+      
       const { error: revError } = await supabase.from("revisions").insert([{
-        task_id: task.id,           // ID zadatka koji brišemo
-        profile_id: task.profile_id, // kome je zadatak pripadao
+        task_id: task.id,           
+        profile_id: task.profile_id, 
         action: "delete",
         changed_data: { 
           title: task.title, 
           description: task.description, 
           status: task.status, 
-          user_id: userId // ko je izvršio brisanje
+          user_id: userId 
         }
       }]);
   
@@ -159,14 +159,14 @@ export default function TodosPage() {
         return;
       }
   
-      // 2. Fizički briši zadatak iz tasks tabele
+      
       const { error: delError } = await supabase.from("tasks").delete().eq("id", task.id);
       if (delError) {
         console.error("Greška pri brisanju zadatka:", delError);
         return;
       }
   
-      // 3. Ukloni zadatak iz frontend liste
+      
       setTasks(tasks.filter(t => t.id !== task.id));
   
     } catch (err) {
