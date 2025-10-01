@@ -53,24 +53,30 @@ export default function AdminProfilesPage() {
   };
 
   return (
-    <div className="admin-page">
+    <div className="profiles-page">
+      <div className="profiles-card">
       <h1>Admin - Korisnici i njihovi profili</h1>
 
       {users.map((user) => (
-        <div key={user.account_id} className="admin-user-card">
-          <ul>
+        <div key={user.account_id} className="profiles-card" style={{marginLeft: '-1.5vh'}}>
+          <ul className="profiles-list">
             {user.profiles.map((p) => (
               <li
+                className="profile-item"
                 key={p.id}
                 onClick={() => handleOpenProfile(p.id)}
                 style={{ cursor: "pointer" }}
               >
                 <span className="profile-name">{p.username}</span>
+                <div className="profile-actions">
+                  <button className="button button-small" onClick={() => handleOpenProfile(p.id)}>Otvori</button>
+                </div>
               </li>
             ))}
           </ul>
         </div>
       ))}
+    </div>
     </div>
   );
 }

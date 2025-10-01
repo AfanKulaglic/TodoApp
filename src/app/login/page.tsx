@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
+import Image from "next/image";
+import welcome_img from "../../../public/assets/welcome_vector.png"
 
 export default function LoginPage() {
   const router = useRouter();
@@ -55,7 +57,8 @@ export default function LoginPage() {
   return (    
     <div className="section-center">
       <div className="card">
-        <h1>Prijava</h1>
+        <h1>Dobrodosli u <br/> To Do App</h1>
+        <Image src={welcome_img} alt="Welcome" className="welcome_img" />
         <form onSubmit={handleSubmit} className="form">
           <input
             type="email"
@@ -71,6 +74,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <a href="/register">Registruj se</a>
           <button type="submit" className="button">
             Prijavi se
           </button>

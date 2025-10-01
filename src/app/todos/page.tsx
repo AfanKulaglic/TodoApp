@@ -42,11 +42,16 @@ export default function TodosPage() {
   const [loading, setLoading] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string>("");
+
+  // za edit
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
 
-  
+  // modal state
+  const [showModal, setShowModal] = useState(false);
+  const [modalClosing, setModalClosing] = useState(false);
+
   useEffect(() => {
     const fetchUserAndProfiles = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -71,7 +76,6 @@ export default function TodosPage() {
     fetchUserAndProfiles();
   }, []);
 
-  
   useEffect(() => {
     if (!selectedProfileId) return;
 
@@ -89,7 +93,7 @@ export default function TodosPage() {
     fetchTasks();
   }, [selectedProfileId]);
 
-  
+  // --- TVOJE POSTOJEĆE FUNKCIJE ---
   const handleAddTask = async () => {
     if (!newTitle.trim() || !selectedProfileId) return;
     setLoading(true);
@@ -114,9 +118,9 @@ export default function TodosPage() {
 
     setNewTitle("");
     setNewDescription("");
+    closeModal();
   };
 
-  
   const toggleTaskStatus = async (task: Task) => {
     const newStatus = task.status === "done" ? "pending" : "done";
 
@@ -136,15 +140,13 @@ export default function TodosPage() {
     } else console.error(error);
   };
 
-  
   const handleDeleteTask = async (task: Task) => {
     if (!task) return;
-  
+
     try {
-      
-      const { error: revError } = await supabase.from("revisions").insert([{
-        task_id: task.id,           
-        profile_id: task.profile_id, 
+      await supabase.from("revisions").insert([{
+        task_id: task.id,
+        profile_id: task.profile_id,
         action: "delete",
         changed_data: { 
           title: task.title, 
@@ -153,32 +155,24 @@ export default function TodosPage() {
           user_id: userId 
         }
       }]);
-  
-      if (revError) {
-        console.error("Greška pri spremanju revizije:", revError);
-        return;
-      }
-  
-      
+
       const { error: delError } = await supabase.from("tasks").delete().eq("id", task.id);
       if (delError) {
         console.error("Greška pri brisanju zadatka:", delError);
         return;
       }
-  
-      
+
       setTasks(tasks.filter(t => t.id !== task.id));
-  
     } catch (err) {
       console.error("Neočekivana greška pri brisanju:", err);
     }
   };
-  
 
-  const startEditing = (task: Task) => {
+  const startEditingWithModal = (task: Task) => {
     setEditingTaskId(task.id);
     setEditingTitle(task.title);
     setEditingDescription(task.description || "");
+    setShowModal(true);
   };
 
   const saveEditing = async () => {
@@ -200,104 +194,116 @@ export default function TodosPage() {
         changed_data: { title: editingTitle, description: editingDescription, user_id: userId }
       }]);
 
-      setEditingTaskId(null);
-      setEditingTitle("");
-      setEditingDescription("");
+      closeModal();
     } else console.error(error);
   };
 
-  return (<div className="admin-dashboard">
-    <h1>Moji Zadaci</h1>
-  
-    {userEmail && <p className="user-email">Prijavljeni ste kao: <strong>{userEmail}</strong></p>}
-  
-    <div className="profile-select">
-      <label>
-        Odaberite profil:{" "}
-        <select
-          value={selectedProfileId}
-          onChange={(e) => setSelectedProfileId(e.target.value)}
-          className="input"
-        >
-          {profiles.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.username}
-            </option>
-          ))}
-        </select>
-      </label>
-    </div>
-  
-    <div className="task-add-form">
-      <input
-        type="text"
-        placeholder="Naslov zadatka"
-        value={newTitle}
-        onChange={(e) => setNewTitle(e.target.value)}
-        className="input"
-      />
-      <input
-        type="text"
-        placeholder="Opis zadatka"
-        value={newDescription}
-        onChange={(e) => setNewDescription(e.target.value)}
-        className="input"
-      />
-      <button onClick={handleAddTask} disabled={loading} className="button">
-        {loading ? "Dodavanje..." : "Dodaj zadatak"}
-      </button>
-    </div>
-  
-    <ul className="task-list">
-      {tasks.map((task) => (
-        <li key={task.id} className="task-item">
-          <input
-            type="checkbox"
-            checked={task.status === "done"}
-            onChange={() => toggleTaskStatus(task)}
-          />
-          <span className={`task-info ${task.status === "done" ? "task-done" : ""}`}>
-            <strong>{task.title}</strong>: {task.description} ({task.status})
-          </span>
-  
-          <div className="task-actions">
-            {editingTaskId === task.id ? (
-              <>
-                <input
-                  type="text"
-                  value={editingTitle}
-                  onChange={(e) => setEditingTitle(e.target.value)}
-                  className="input"
-                />
-                <input
-                  type="text"
-                  value={editingDescription}
-                  onChange={(e) => setEditingDescription(e.target.value)}
-                  className="input"
-                />
-                <button onClick={saveEditing} className="button">
-                  Spremi
-                </button>
-                <button onClick={() => setEditingTaskId(null)} className="button button-danger">
-                  Odustani
-                </button>
-              </>
-            ) : (
-              <>
-                <button onClick={() => startEditing(task)} className="button button-small">
+  const closeModal = () => {
+    setModalClosing(true);
+    setTimeout(() => {
+      setShowModal(false);
+      setModalClosing(false);
+      setEditingTaskId(null);
+      setEditingTitle("");
+      setEditingDescription("");
+      setNewTitle("");
+      setNewDescription("");
+    }, 300); // trajanje animacije
+  };
+
+  return (
+    <div className="task-section">
+      <div className="task-card">
+        <h1>Moji Zadaci</h1>
+
+        {userEmail && <p className="user-email"><strong>{userEmail}</strong></p>}
+
+        <div className="profile-select">
+          <label>
+            Odaberite profil:{" "}
+            <select
+              value={selectedProfileId}
+              onChange={(e) => setSelectedProfileId(e.target.value)}
+              className="input"
+            >
+              {profiles.map((p) => (
+                <option key={p.id} value={p.id}>{p.username}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <button onClick={() => setShowModal(true)} className="add-button">
+          ➕ 
+        </button>
+
+        <ul className="task-list">
+          {tasks.map((task) => (
+            <li key={task.id} className="task-item">
+              <input
+                type="checkbox"
+                checked={task.status === "done"}
+                onChange={() => toggleTaskStatus(task)}
+                className="task-checkbox"
+              />
+              <span className={`task-info ${task.status === "done" ? "task-done" : ""}`}>
+                <strong>{task.title}</strong>: {task.description}
+              </span>
+
+              <div className="task-actions">
+                <button
+                  onClick={() => startEditingWithModal(task)}
+                  className="button button-small"
+                >
                   Uredi
                 </button>
-                <button onClick={() => handleDeleteTask(task)} className="button button-small button-danger">
+                <button
+                  onClick={() => handleDeleteTask(task)}
+                  className="button button-small button-danger"
+                >
                   Izbriši
                 </button>
-              </>
-            )}
-          </div>
-        </li>
-      ))}
-    </ul>
-  </div>
-  
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
 
+      {/* Modal */}
+      {showModal && (
+        <div className={`modal-overlay ${modalClosing ? "fade-out" : "fade-in"}`}>
+          <div className={`modal-content ${modalClosing ? "slide-down" : "slide-up"}`}>
+            <h2>{editingTaskId ? "Uredi Zadatak" : "Novi Zadatak"}</h2>
+            <input
+              type="text"
+              placeholder="Naslov zadatka"
+              value={editingTaskId ? editingTitle : newTitle}
+              onChange={(e) => editingTaskId ? setEditingTitle(e.target.value) : setNewTitle(e.target.value)}
+              className="input"
+            />
+            <input
+              type="text"
+              placeholder="Opis zadatka"
+              value={editingTaskId ? editingDescription : newDescription}
+              onChange={(e) => editingTaskId ? setEditingDescription(e.target.value) : setNewDescription(e.target.value)}
+              className="input"
+            />
+            <div className="modal-actions">
+              <button
+                onClick={editingTaskId ? saveEditing : handleAddTask}
+                disabled={loading}
+                className="button"
+              >
+                {loading ? "Spremanje..." : "Potvrdi"}
+              </button>
+              <button onClick={closeModal} className="button button-danger">
+                Zatvori
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
   );
 }

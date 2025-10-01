@@ -17,7 +17,7 @@ type ChangedData = {
   title?: string;
   description?: string;
   status?: "pending" | "in_progress" | "done" | "deleted";
-  user_id?: string; 
+  user_id?: string;
 };
 
 type Revision = {
@@ -48,7 +48,10 @@ export default function AdminTodosPage() {
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
 
-  
+  // modal state
+  const [showModal, setShowModal] = useState(false);
+  const [modalClosing, setModalClosing] = useState(false);
+
   useEffect(() => {
     if (!profileIdFromUrl) return;
 
@@ -66,7 +69,6 @@ export default function AdminTodosPage() {
     fetchProfile();
   }, [profileIdFromUrl]);
 
-  
   useEffect(() => {
     if (!profileIdFromUrl) return;
 
@@ -80,7 +82,6 @@ export default function AdminTodosPage() {
       if (taskError) console.error(taskError);
       else setTasks(taskData || []);
 
-      
       const { data: revData, error: revError } = await supabase
         .from("revisions")
         .select("*, profile_id")
@@ -93,7 +94,6 @@ export default function AdminTodosPage() {
         return;
       }
 
-      
       const { data: allProfiles } = await supabase
         .from("profiles")
         .select("id, username");
@@ -124,7 +124,6 @@ export default function AdminTodosPage() {
     else if (data && data[0]) {
       setTasks([...tasks, data[0]]);
 
-      
       await supabase.from("revisions").insert([{
         task_id: data[0].id,
         profile_id: profileIdFromUrl,
@@ -133,8 +132,7 @@ export default function AdminTodosPage() {
       }]);
     }
 
-    setNewTitle("");
-    setNewDescription("");
+    closeModal();
   };
 
   const toggleTaskStatus = async (task: Task) => {
@@ -168,10 +166,11 @@ export default function AdminTodosPage() {
     } else console.error(error);
   };
 
-  const startEditing = (task: Task) => {
+  const startEditingWithModal = (task: Task) => {
     setEditingTaskId(task.id);
     setEditingTitle(task.title);
     setEditingDescription(task.description || "");
+    setShowModal(true);
   };
 
   const saveEditing = async () => {
@@ -193,100 +192,173 @@ export default function AdminTodosPage() {
         changed_data: { title: editingTitle, description: editingDescription }
       }]);
 
-      setEditingTaskId(null);
-      setEditingTitle("");
-      setEditingDescription("");
+      closeModal();
     } else console.error(error);
   };
 
+  const closeModal = () => {
+    setModalClosing(true);
+    setTimeout(() => {
+      setShowModal(false);
+      setModalClosing(false);
+      setEditingTaskId(null);
+      setEditingTitle("");
+      setEditingDescription("");
+      setNewTitle("");
+      setNewDescription("");
+    }, 300);
+  };
+
+  // Revisions modal state
+  const [showRevisionsModal, setShowRevisionsModal] = useState(false);
+  const [currentRevisions, setCurrentRevisions] = useState<Revision[]>([]);
+  const [currentTaskTitle, setCurrentTaskTitle] = useState("");
+
+
+  const openRevisionsModal = (task: Task) => {
+    const filteredRevisions = revisions.filter(r => r.task_id === task.id);
+    console.log("Otvaram revisions za task:", task.id, task.title);
+    console.log("Filtered revisions:", filteredRevisions);
+
+    setCurrentRevisions(filteredRevisions);
+    setCurrentTaskTitle(task.title);
+    setShowRevisionsModal(true);
+  };
+
+
+
+
   return (
-    <div className="admin-dashboard">
-  <h1>Admin - Zadaci za profil: {profile?.username || "Nepoznat profil"}</h1>
+    <div className="task-section">
+      <div className="task-card">
+        <h1>Admin - Zadaci za profil: {profile?.username || "Nepoznat profil"}</h1>
 
-  <div className="task-add-form">
-    <input
-      type="text"
-      placeholder="Naslov zadatka"
-      value={newTitle}
-      onChange={(e) => setNewTitle(e.target.value)}
-    />
-    <input
-      type="text"
-      placeholder="Opis zadatka"
-      value={newDescription}
-      onChange={(e) => setNewDescription(e.target.value)}
-    />
-    <button onClick={handleAddTask} disabled={loading}>
-      {loading ? "Dodavanje..." : "Dodaj zadatak"}
-    </button>
-  </div>
+        <ul className="task-list">
+          {tasks.map((task) => (
+            <li key={task.id} className="task-item">
+              <input
+                type="checkbox"
+                checked={task.status === "done"}
+                onChange={() => toggleTaskStatus(task)}
+                className="task-checkbox"
+              />
+              <span className="task-info">
+                <strong>{task.title}</strong>: {task.description}
+              </span>
 
-  <ul className="task-list">
-    {tasks.map((task) => (
-      <li key={task.id} className="task-item">
-      <input
-        type="checkbox"
-        checked={task.status === "done"}
-        onChange={() => toggleTaskStatus(task)}
-      />
-      {editingTaskId === task.id ? (
-        <>
-          <input
-            style={{marginTop: "18px"}}
-            type="text"
-            value={editingTitle}
-            onChange={(e) => setEditingTitle(e.target.value)}
-          />
-          <input
-            style={{marginTop: "5px"}}
-            type="text"
-            value={editingDescription}
-            onChange={(e) => setEditingDescription(e.target.value)}
-          />
-          <div className="task-actions">
-            <button onClick={saveEditing}>Spremi</button>
-            <button onClick={() => setEditingTaskId(null)}>Odustani</button>
-          </div>
-        </>
-      ) : (
-        <>
-          <span className="task-info">
-            <strong>{task.title}</strong>: {task.description} ({task.status})
-          </span>
-    
-          <div className="task-actions">
-            <button onClick={() => startEditing(task)}>Uredi</button>
-            <button onClick={() => handleDeleteTask(task.id)}>Izbriši</button>
-            <span
-              className="revisions-toggle"
-              onClick={() =>
-                document
-                  .getElementById(`revisions-${task.id}`)
-                  ?.classList.toggle("open")
-              }
-            >
-              ▼
-            </span>
-          </div>
-    
-          <ul id={`revisions-${task.id}`} className="revisions-dropdown">
-            {revisions
-              .filter((r) => r.task_id === task.id)
-              .map((r) => (
-                <li key={r.id}>
-                  [{new Date(r.created_at).toLocaleString()}] {r.action} -{" "}
-                  {JSON.stringify(r.changed_data)}
-                </li>
-              ))}
-          </ul>
-        </>
+              <div className="task-actions">
+                <button
+                  onClick={() => startEditingWithModal(task)}
+                  className="button button-small"
+                >
+                  Uredi
+                </button>
+                <button
+                  onClick={() => handleDeleteTask(task.id)}
+                  className="button button-small button-danger"
+                >
+                  Izbriši
+                </button>
+                <span
+                  className="revisions-toggle"
+                  onClick={() => openRevisionsModal(task)}
+                >
+                  📊
+                </span>
+
+              </div>
+
+            </li>
+          ))}
+        </ul>
+
+        <button onClick={() => setShowModal(true)} className="add-button">
+          ➕
+        </button>
+      </div>
+
+      {/* Modal */}
+
+      {/* Revisions Modal */}
+      {showRevisionsModal && (
+        <div className="modal-overlay">
+            <div className="modal-content" style={{borderRadius: '20px',marginBottom: 'auto',marginTop: 'auto',color:'black'}}>
+              <h2>Revizija za zadatak: {currentTaskTitle}</h2>
+
+              <table className="revisions-table">
+                <thead>
+                  <tr>
+                    <th>Akcija</th>
+                    <th>Vrijeme</th>
+                    <th>Promjene</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentRevisions.map((r) => (
+                    <tr key={r.id}>
+                      <td>{r.action}</td>
+                      <td>{new Date(r.created_at).toLocaleString()}</td>
+                      <td>
+                        {Object.entries(r.changed_data).map(([key, value]) => (
+                          <div key={key}>
+                            <strong>{key}</strong>: {value?.toString() || "–"}
+                          </div>
+                        ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="modal-buttons">
+                <button
+                  onClick={() => setShowRevisionsModal(false)}
+                  className="button button-danger"
+                >
+                  Zatvori
+                </button>
+              </div>
+            </div>
+        </div>
       )}
-    </li>
-    
-    ))}
-  </ul>
-</div>
 
 
+
+
+
+      {showModal && (
+        <div className={`modal-overlay ${modalClosing ? "fade-out" : "fade-in"}`}>
+          <div className={`modal-content ${modalClosing ? "slide-down" : "slide-up"}`}>
+            <h2>{editingTaskId ? "Uredi Zadatak" : "Novi Zadatak"}</h2>
+            <input
+              type="text"
+              placeholder="Naslov zadatka"
+              value={editingTaskId ? editingTitle : newTitle}
+              onChange={(e) => editingTaskId ? setEditingTitle(e.target.value) : setNewTitle(e.target.value)}
+              className="input"
+            />
+            <input
+              type="text"
+              placeholder="Opis zadatka"
+              value={editingTaskId ? editingDescription : newDescription}
+              onChange={(e) => editingTaskId ? setEditingDescription(e.target.value) : setNewDescription(e.target.value)}
+              className="input"
+            />
+            <div className="modal-buttons">
+              <button
+                onClick={editingTaskId ? saveEditing : handleAddTask}
+                disabled={loading}
+                className="button"
+              >
+                {loading ? "Spremanje..." : "Potvrdi"}
+              </button>
+              <button onClick={closeModal} className="button button-danger">
+                Zatvori
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
