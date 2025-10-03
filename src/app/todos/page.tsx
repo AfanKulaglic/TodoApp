@@ -43,12 +43,19 @@ export default function TodosPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string>("");
 
-  // za edit
+  
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
+  
+  const [newDueDate, setNewDueDate] = useState(""); // yyyy-mm-dd
+const [newDueTime, setNewDueTime] = useState(""); // HH:MM
 
-  // modal state
+const [editingDueDate, setEditingDueDate] = useState("");
+const [editingDueTime, setEditingDueTime] = useState("");
+
+
+  
   const [showModal, setShowModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
 
@@ -76,6 +83,7 @@ export default function TodosPage() {
     fetchUserAndProfiles();
   }, []);
 
+
   useEffect(() => {
     if (!selectedProfileId) return;
 
@@ -84,16 +92,20 @@ export default function TodosPage() {
         .from("tasks")
         .select("*")
         .eq("profile_id", selectedProfileId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false }); 
 
       if (error) console.error(error);
-      else setTasks(data || []);
+      else {
+        const grouped = groupTasksByDate(data || []);
+        setTasksByDate(grouped);
+      }
     };
 
     fetchTasks();
   }, [selectedProfileId]);
 
-  // --- TVOJE POSTOJEĆE FUNKCIJE ---
+
+  
   const handleAddTask = async () => {
     if (!newTitle.trim() || !selectedProfileId) return;
     setLoading(true);
@@ -123,14 +135,25 @@ export default function TodosPage() {
 
   const toggleTaskStatus = async (task: Task) => {
     const newStatus = task.status === "done" ? "pending" : "done";
-
+  
+    
+    setTasksByDate(prev => {
+      const dateKey = task.created_at.split("T")[0];
+      return {
+        ...prev,
+        [dateKey]: prev[dateKey].map(t =>
+          t.id === task.id ? { ...t, status: newStatus } : t
+        ),
+      };
+    });
+  
+    
     const { error } = await supabase
       .from("tasks")
       .update({ status: newStatus, updated_at: new Date() })
       .eq("id", task.id);
-
+  
     if (!error) {
-      setTasks(tasks.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
       await supabase.from("revisions").insert([{
         task_id: task.id,
         profile_id: selectedProfileId,
@@ -139,6 +162,7 @@ export default function TodosPage() {
       }]);
     } else console.error(error);
   };
+  
 
   const handleDeleteTask = async (task: Task) => {
     if (!task) return;
@@ -148,11 +172,11 @@ export default function TodosPage() {
         task_id: task.id,
         profile_id: task.profile_id,
         action: "delete",
-        changed_data: { 
-          title: task.title, 
-          description: task.description, 
-          status: task.status, 
-          user_id: userId 
+        changed_data: {
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          user_id: userId
         }
       }]);
 
@@ -208,8 +232,50 @@ export default function TodosPage() {
       setEditingDescription("");
       setNewTitle("");
       setNewDescription("");
-    }, 300); // trajanje animacije
+    }, 300); 
   };
+
+  const groupTasksByDate = (tasks: Task[]) => {
+    const groups: { [date: string]: Task[] } = {};
+
+    tasks.forEach((task) => {
+      const date = new Date(task.created_at).toISOString().split("T")[0]; 
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(task);
+    });
+
+    return groups;
+  };
+
+  const [tasksByDate, setTasksByDate] = useState<{ [date: string]: Task[] }>({});
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const dates = Object.keys(tasksByDate).sort(
+    (a, b) => new Date(b).getTime() - new Date(a).getTime()
+  );
+
+  const goPrev = () => {
+    if (currentSlide > 0) setCurrentSlide(currentSlide - 1);
+  };
+
+  const goNext = () => {
+    if (currentSlide < dates.length - 1) setCurrentSlide(currentSlide + 1);
+  };
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return ""; 
+  
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+  
+    const weekday = date.toLocaleDateString("bs-BA", { weekday: "long" });
+    const monthName = date.toLocaleDateString("bs-BA", { month: "long" });
+  
+    return `${weekday}, ${day}. ${monthName}`;
+  };
+  
+  
+
 
   return (
     <div className="task-section">
@@ -234,39 +300,68 @@ export default function TodosPage() {
         </div>
 
         <button onClick={() => setShowModal(true)} className="add-button">
-          ➕ 
+          ➕
         </button>
 
-        <ul className="task-list">
-          {tasks.map((task) => (
-            <li key={task.id} className="task-item">
-              <input
-                type="checkbox"
-                checked={task.status === "done"}
-                onChange={() => toggleTaskStatus(task)}
-                className="task-checkbox"
-              />
-              <span className={`task-info ${task.status === "done" ? "task-done" : ""}`}>
-                <strong>{task.title}</strong>: {task.description}
-              </span>
+        <div className="slider-container">
+          <div className="slider-actions">
+            <button
+              onClick={goNext}
+              disabled={currentSlide === dates.length - 1}
+              className="slider-btn"
+            >
+              ◀
+            </button>
+            <p>
+  {formatDate(dates[currentSlide])}
+</p>
 
-              <div className="task-actions">
-                <button
-                  onClick={() => startEditingWithModal(task)}
-                  className="button button-small"
-                >
-                  Uredi
-                </button>
-                <button
-                  onClick={() => handleDeleteTask(task)}
-                  className="button button-small button-danger"
-                >
-                  Izbriši
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+            <button onClick={goPrev} disabled={currentSlide === 0} className="slider-btn">
+              ▶
+            </button>
+          </div>
+
+          {dates.length > 0 && (
+            <div className="task-slide active">
+              <ul className="task-list">
+                {tasksByDate[dates[currentSlide]].map((task) => (
+                  <li key={task.id} className="task-item">
+                    <input
+                      type="checkbox"
+                      checked={task.status === "done"}
+                      onChange={() => toggleTaskStatus(task)}
+                      className="task-checkbox"
+                    />
+                    <span
+                      className={`task-info ${task.status === "done" ? "task-done" : ""
+                        }`}
+                    >
+                      <strong>{task.title}</strong>: {task.description}
+                    </span>
+
+                    <div className="task-actions">
+                      <button
+                        onClick={() => startEditingWithModal(task)}
+                        className="button button-small"
+                      >
+                        Uredi
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTask(task)}
+                        className="button button-small button-danger"
+                      >
+                        Izbriši
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+
+
       </div>
 
       {/* Modal */}

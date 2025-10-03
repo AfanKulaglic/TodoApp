@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>To Do APP - Documentation</title>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Bootstrap Documentation Template For Software Developers">
+    <meta name="author" content="Xiaoying Riley at 3rd Wave Media">
+    <link rel="shortcut icon" href="favicon.ico">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome JS-->
+    <script defer src="assets/fontawesome/js/all.min.js"></script>
+
+    <!-- Plugins CSS -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.2/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="assets/plugins/simplelightbox/simple-lightbox.min.css">
+
+    <!-- Theme CSS -->
+    <link id="theme-style" rel="stylesheet" href="assets/css/theme.css">
+
+</head>
+
+<body class="docs-page">
+    <header class="header fixed-top">
+        <div class="branding docs-branding">
+            <div class="container-fluid position-relative py-2">
+                <div class="docs-logo-wrapper">
+                    <button id="docs-sidebar-toggler" class="docs-sidebar-toggler docs-sidebar-visible me-2 d-xl-none" type="button">
+	                    <span></span>
+	                    <span></span>
+	                    <span></span>
+	                </button>
+                    <div class="site-logo"><a class="navbar-brand" href="index.html"><img class="logo-icon me-2" src="assets/images/coderdocs-logo.svg" alt="logo"><span class="logo-text">Coder<span class="text-alt">Docs</span></span></a></div>
+                </div>
+                <!--//docs-top-utilities-->
+            </div>
+            <!--//container-->
+        </div>
+        <!--//branding-->
+    </header>
+    <!--//header-->
+
+
+    <div class="docs-wrapper">
+        <div id="docs-sidebar" class="docs-sidebar">
+            <div class="top-search-box d-lg-none p-3">
+            </div>
+            <nav id="docs-nav" class="docs-nav navbar">
+                <ul class="section-items list-unstyled nav flex-column pb-3">
+                    <li class="nav-item section-title"><a class="nav-link scrollto active" href="#section-1"><span class="theme-icon-holder me-2"><i class="fas fa-map-signs"></i></span>User Accounts & Profiles</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#item-1-1">Supabase client</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#item-1-2">Login</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#item-1-3">Registration</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#item-1-4">User Profile Management</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#item-1-5">User and Profile Overview</a></li>
+                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-2"><span class="theme-icon-holder me-2"><i class="fas fa-arrow-down"></i></span>Task Managment</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#item-2-1">Task Management for User Profiles</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#item-2-2">Task Management for Admins</a></li>
+                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-3"><span class="theme-icon-holder me-2"><i class="fas fa-box"></i></span>Database Structure and Functionality</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#item-3-1">Tables</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#item-3-2">Relationships and Cascading Rules</a></li>
+                </ul>
+
+            </nav>
+            <!--//docs-nav-->
+        </div>
+        <!--//docs-sidebar-->
+        <div class="docs-content">
+            <div class="container">
+                <article class="docs-article" id="section-1">
+                    <section class="docs-section" id="item-1-1">
+                        <h2 class="section-heading">Supabase client</h2><div class="docs-code-block">
+                            <pre class="shadow-lg rounded"><code class="js hljs">                            
+import { createClient } from '@supabase/supabase-js'
+
+export const supabase = createClient(
+    'https://kertmyfofotuwzozocdc.supabase.co',
+    'public-anon-key'
+)
+                            </code></pre>
+                        </div>
+                        <p>A centralized Supabase client is created to handle database access and authentication.</p>
+                        <p>Solves the problem of repeated configuration: any file that needs DB or auth can simply import supabase.</p>
+                        
+
+
+                    </section>
+                    <!--//section-->
+
+                    <section class="docs-section" id="item-1-2">
+                        <h2 class="section-heading">Login</h2>
+                        <h5 class="mt-5">User Authentication</h5>
+                        <p>Uses Supabase Auth’s signInWithPassword to connect the user to the database with their email and password.</p>
+                        <pre class="shadow-lg rounded"><code class="js hljs">                            
+const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                                                </code></pre>
+                        <p>If authentication fails, an error is returned and the process stops.</p>
+                    
+                        <h5 class="mt-5">Fetching the User Role</h5><pre class="shadow-lg rounded"><code class="js hljs">                            
+const { data: roleData } = await supabase
+    .from("roles")
+    .select("role")
+    .eq("account_id", data.user.id)
+    .single()
+                        </code></pre>
+                        <p>After successful login, the user’s role is fetched from the roles table.</p>
+                        <p>eq("account_id", data.user.id) ensures the role belongs to the currently logged-in user.</p>
+                        <p>.single() returns a single record, since each user has one primary role.</p>
+                        
+                        <h5 class="mt-5">Role-Based Redirection</h5><pre class="shadow-lg rounded"><code class="js hljs">    
+                        <p>redirects the user based on their role, ensuring proper access to the application.</p>
+const { data: roleData } = await supabase
+    .from("roles")
+    .select("role")
+    .eq("account_id", data.user.id)
+    .single()
+                        </code></pre>
+                        <p>If the role is superadmin, the user is redirected to /adminProfiles.</p>
+                        <p>If the role is a normal user, they are redirected to /profiles.</p>
+                        <p>This enforces role-based access control immediately after login.</p>
+                                                
+                    </section>
+                    <!--//section-->
+
+                    <section class="docs-section" id="item-1-3">
+                        <h2 class="section-heading">Registration</h2>
+                        <p>Supabase is configured to handle authentication using email and password, where the signUp function not only creates a new user account but also triggers an email verification process, ensuring that only users who confirm their email are able to successfully log in.</p>
+                        
+                        <h5 class="mt-5">Registration Flow</h5>
+                        <p>redirects the user based on their role, ensuring proper access to the application.</p>
+                        <pre class="shadow-lg rounded"><code class="js hljs"> 
+const { data: roleData } = await supabase
+    .from("roles")
+    .select("role")
+    .eq("account_id", data.user.id)
+    .single()
+                        </code></pre>
+                        <p>If the role is superadmin, the user is redirected to /adminProfiles.</p>
+                        <p>If the role is a normal user, they are redirected to /profiles.</p>
+                        <p>This enforces role-based access control immediately after login.</p>
+                    </section>
+                    <!--//section-->
+
+                    <section class="docs-section" id="item-1-4">
+                        <h2 class="section-heading">User Profile Management</h2>
+                        <p>This page allows users to view, create, delete, and open their profiles. Each user can have a maximum of three profiles per account, and all profiles share the parent account credentials. The page is integrated with Supabase Auth and the profiles table, while role-based access ensures that each profile has an appropriate role (user).</p>
+
+                        <h5 class="mt-5">Fetching User and Their Profiles</h5>
+                        <p>supabase.auth.getUser() is used to check the currently logged-in user. If a user exists, all their profiles are fetched from the profiles table using the account_id. The data is stored in React state profiles for display in the UI.</p>
+                        <pre class="shadow-lg rounded"><code class="js hljs"> 
+useEffect(() => {
+    const getUserAndProfiles = async () => {
+        const { data: { user }, error } = await supabase.auth.getUser()
+        if (error || !user) return
+        setUserId(user.id)
+        setUserEmail(user.email ?? null)
+        const { data, error: profilesError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("account_id", user.id)
+        if (!profilesError) setProfiles(data || [])
+    }
+    getUserAndProfiles()
+}, [])
+                        </code></pre>
+                        <p>getUserAndProfiles fetches the current user from Supabase Auth.</p>
+                        <p>Then it queries the profiles table for all profiles belonging to that user.</p>
+                        <p>The profiles are stored in the profiles state to update the UI.</p>
+
+                        <h5 class="mt-5">Adding a New Profile</h5>
+                        <p>A new profile requires a unique username. Users can have up to three profiles per account. After successfully creating a profile, a user role is added to the roles table.</p>
+                        <pre class="shadow-lg rounded"><code class="js hljs"> 
+const handleAddProfile = async () => {
+    if (!userId) return
+    if (profiles.length >= 3) { alert("Maximum 3 profiles."); return }
+    if (!newUsername.trim()) { alert("Enter a profile name."); return }
+    
+    setLoading(true)
+    const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .insert([{ account_id: userId, username: newUsername }])
+        .select()
+    setLoading(false)
+    
+    if (!profileError) {
+        await supabase.from("roles").insert([{ account_id: userId, role: "user" }])
+        setProfiles([...profiles, ...(profileData || [])])
+        setNewUsername("")
+    }
+}
+                        </code></pre><p>Checks that the user exists and the profile limit isn’t exceeded.</p>
+                        <p>Creates the profile in the database and assigns a user role.</p>
+                        <p>Checks that the user exists and the profile limit isn’t exceeded.</p>
+                        
+                        <h5 class="mt-5">Deleting a Profile</h5>
+                        <p>Profiles can be deleted from the profiles table. If a profile has associated tasks, the database may prevent deletion due to constraints.</p>
+                        <pre class="shadow-lg rounded"><code class="js hljs"> 
+const handleAddProfile = async () => {
+    if (!userId) return
+    if (profiles.length >= 3) { alert("Maximum 3 profiles."); return }
+    if (!newUsername.trim()) { alert("Enter a profile name."); return }
+    
+    setLoading(true)
+    const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .insert([{ account_id: userId, username: newUsername }])
+        .select()
+    setLoading(false)
+    
+    if (!profileError) {
+        await supabase.from("roles").insert([{ account_id: userId, role: "user" }])
+        setProfiles([...profiles, ...(profileData || [])])
+        setNewUsername("")
+    }
+}
+                        </code></pre>
+
+                        <h5 class="mt-5">Opening a Profile</h5>
+                        <p>When a user opens a profile, its ID is saved to sessionStorage so that /todos can load tasks only for that profile.</p>
+                        <pre class="shadow-lg rounded"><code class="js hljs"> 
+const handleOpenProfile = (id: string) => {
+    sessionStorage.setItem("selectedProfileId", id)
+    router.push("/todos")
+}                              
+                        </code></pre>
+
+                        <h5 class="mt-5">Display Profiles</h5>
+                        <p>Displays a list of all profiles with buttons to open or delete.</p>
+                        <p>The form to add a new profile is only shown if the user has fewer than 3 profiles.</p>
+                        <p>Displays the currently logged-in user’s email.</p>
+                        <pre class="shadow-lg rounded"><code class="js hljs"> 
+const handleOpenProfile = (id: string) => {
+    sessionStorage.setItem("selectedProfileId", id)
+    router.push("/todos")
+}                              
+                        </code></pre>
+                                                    
+                    </section>
+                    <!--//section-->
+                    <section class="docs-section" id="item-1-5">
+                        <h2 class="section-heading">User and Profile Overview</h2>
+                        <p>This page is designed for superadministrators and allows them to view all user accounts and their associated profiles. Administrators can open any profile to access that profile’s tasks (/adminTodos). The page uses Supabase to fetch data from the profiles table and groups profiles by account_id.</p>
+                        
+                        <h5 class="mt-5">Fetching All Profiles and Grouping by Account</h5>
+                        <p>All profiles are fetched from the profiles table, including id, username, and account_id.</p>
+                        <p>Profiles are then grouped by account_id so that each user account shows its associated profiles.</p>
+                        <p>The grouped data is stored in the React state users for display in the UI.</p>
+                        <pre class="shadow-lg rounded"><code class="js hljs"> 
+    const fetchProfiles = async () => {
+        const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, username, account_id");
+    
+        if (profileError) {
+        console.error("Error fetching profiles:", profileError);
+        return;
+        }
+    
+        if (!profileData) return;
+    
+        const grouped: Record<string, GroupedUser> = {};
+    
+        for (const profile of profileData) {
+        if (!grouped[profile.account_id]) {
+            grouped[profile.account_id] = {
+            account_id: profile.account_id,
+            profiles: [],
+            };
+        }
+        grouped[profile.account_id].profiles.push({
+            id: profile.id,
+            username: profile.username,
+        });
+        }
+    
+        setUsers(Object.values(grouped));
+    };
+    
+    fetchProfiles();                                      
+                        </code></pre>
+                        <p>Each profile is added to the corresponding account_id.</p>
+                        <p>This allows the administrator to see all profiles organized by user account.</p>
+
+                        <h5 class="mt-5">Opening a Profile</h5>
+                        <p>By clicking on a profile, the administrator is redirected to /adminTodos with a query parameter identifying the selected profile.</p>
+                        <pre class="shadow-lg rounded"><code class="js hljs"> 
+const handleOpenProfile = (id: string) => {
+    sessionStorage.setItem("selectedProfileId", id)
+    router.push("/todos")
+}                              
+                        </code></pre>
+                        <p>This allows the administrator to view tasks for any profile, bypassing restrictions that regular users have.</p>
+                        <p>The profileId is passed via URL query so /adminTodos can load only the relevant tasks.</p>
+
+                        <h5 class="mt-5">Admin Profiles Page – User Profile Management</h5>
+                        <p>This version of AdminProfilesPage enhances the administrator’s ability to navigate through user profiles.</p>
+                        <p>The backend logic remains the same (fetching and grouping with Supabase), but the UI is upgraded with cards, structured lists, and dedicated buttons for opening profiles.</p>
+                        <p>The result is a more professional and intuitive admin panel, making user and profile management clearer and easier.</p>
+                    </section>
+
+                </article>
+
+                <article class="docs-article" id="section-2">
+                        <h1 class="docs-heading">Tasks</h1>
+                        <p>This section manages how authenticated users interact with profiles and tasks. The main idea is that each account can have multiple profiles, and tasks are always tied to a specific profile. This approach ensures clarity in task ownership and enables auditing all changes through the revisions table.</p>
+                        <section class="docs-section" id="item-2-1">
+                        <header class="docs-header">
+                        <h2 class="section-heading">Task Managment</h2>
+                        <p>This logic provides a structured approach to user accounts and profiles:</p>
+                        <ul>
+                            <li>Identify the currently authenticated user using Supabase Auth.</li>
+                            <li>Fetch all profiles linked to that account.</li>
+                            <li>Allow the user to select a profile, so tasks are scoped correctly.</li>
+                            <li>Link new and existing tasks to the selected profile.</li>
+                            <li>Record every change in a revisions table to ensure transparency and auditability.</li>
+                        </ul>
+                        <p>The result is a robust multi-profile task system where one account can manage multiple profiles with fully traceable task actions.</p>
+                        
+                            <h5 class="mt-5">Fetching the Logged-in User</h5>
+                            <p>Here, the application retrieves the currently authenticated user using Supabase Auth. This step is critical because it identifies who is currently logged in.</p>
+                            <pre class="shadow-lg rounded"><code class="js hljs"> 
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) return;
+
+setUserEmail(user.email ?? null);
+setUserId(user.id);                                                 
+                            </code></pre>
+                            <p>The userId is stored and later used to associate actions (like creating, updating, or deleting tasks) with the correct user. The user’s email is also stored for display purposes, so the interface can show which account is active.</p>
+                            
+                            <h5 class="mt-5">Fetching Profiles Linked to the Account</h5>
+                            <p>Each user account can have multiple profiles. This query fetches all profiles linked to the current account.</p>
+                            <pre class="shadow-lg rounded"><code class="js hljs"> 
+const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username")
+    .eq("account_id", user.id);                                         
+                            </code></pre>
+                            <p>Fetching profiles is necessary because tasks are tied to profiles, not directly to accounts. This separation allows one account to manage multiple “identities” or roles, each with its own set of tasks. The result is stored in the profiles state so the user can select a profile to work on.</p>
+                        
+                            <h5 class="mt-5">Assigning Tasks to Profiles</h5>
+                            <pre class="shadow-lg rounded"><code class="js hljs"> 
+const { data, error } = await supabase
+.from("tasks")
+.insert([{ 
+    profile_id: selectedProfileId, 
+    title: newTitle, 
+    description: newDescription 
+}])
+.select();                                        
+                            </code></pre>
+                            <p>Whenever a new task is created, it is explicitly linked to the currently selected profile using profile_id. This design prevents confusion where tasks could otherwise be associated with the whole account. By associating tasks with profiles, the app can support multi-profile task management: different tasks appear under different profiles, even though they belong to the same user account.</p>
+                        
+                            <h5 class="mt-5">Tracking Changes with Revisions</h5>
+                            <pre class="shadow-lg rounded"><code class="js hljs"> 
+await supabase.from("revisions").insert([{
+    task_id: data[0].id,
+    profile_id: selectedProfileId,
+    action: "create",
+    changed_data: { title: newTitle, description: newDescription, user_id: userId }
+}]);                                      
+                            </code></pre>
+                            <p>Every task operation—whether creating, updating, or deleting—is logged in the revisions table. This is important for auditing: the system knows who made the change, when, and on which profile. For example, if a user edits a task on a profile, the revision records the task’s previous state, the new state, and the userId of the person who performed the action. This ensures full accountability and helps with debugging or restoring tasks if needed.</p>
+                            
+                            <h5 class="mt-5">Creating a Task</h5>
+                            <p>This section describes how the application allows a logged-in user to manage tasks (Todos) for their own profiles. The main actions include creating tasks, editing tasks, and removing tasks, all tied to the currently selected profile.</p>
+                            <pre class="shadow-lg rounded"><code class="js hljs"> 
+const handleAddTask = async () => {
+    if (!newTitle.trim() || !selectedProfileId) return;
+    setLoading(true);
+    
+    const { data, error } = await supabase
+        .from("tasks")
+        .insert([{ profile_id: selectedProfileId, title: newTitle, description: newDescription }])
+        .select();
+    
+    if (data && data[0]) {
+        await supabase.from("revisions").insert([{
+        task_id: data[0].id,
+        profile_id: selectedProfileId,
+        action: "create",
+        changed_data: { title: newTitle, description: newDescription, user_id: userId }
+        }]);
+    }
+    
+    setLoading(false);
+    setTasks([...tasks, ...(data || [])]);
+    setNewTitle("");
+    setNewDescription("");
+    closeModal();
+};                                                                
+                            </code></pre>
+                            <p>The function creates a new task for the currently selected profile (selectedProfileId).</p>
+                            <p>Each new task creation is recorded in the revisions table with action "create" and user information for audit purposes.</p>
+                            <p>After a successful creation, the task list is updated locally and the input fields are cleared.</p>
+
+                            <h5 class="mt-5">Editing a Task</h5>
+                            <pre class="shadow-lg rounded"><code class="js hljs"> 
+const startEditingWithModal = (task: Task) => {
+    setEditingTaskId(task.id);
+    setEditingTitle(task.title);
+    setEditingDescription(task.description || "");
+    setShowModal(true);
+    };
+    
+    const saveEditing = async () => {
+    if (!editingTaskId) return;
+    const { error } = await supabase
+        .from("tasks")
+        .update({ title: editingTitle, description: editingDescription, updated_at: new Date() })
+        .eq("id", editingTaskId);
+    
+    if (!error) {
+        setTasks(tasks.map(t =>
+        t.id === editingTaskId ? { ...t, title: editingTitle, description: editingDescription } : t
+        ));
+    
+        await supabase.from("revisions").insert([{
+        task_id: editingTaskId,
+        profile_id: selectedProfileId,
+        action: "update",
+        changed_data: { title: editingTitle, description: editingDescription, user_id: userId }
+        }]);
+    
+        closeModal();
+    }
+};                                                           
+                            </code></pre>
+                            <p>Editing begins by opening a modal pre-filled with the task data.</p>
+                            <p>Saving updates the task in the database and also logs an "update" entry in the revisions table.</p>
+                            <p>Local state is updated to immediately reflect the changes.</p>
+
+                            <h5 class="mt-5">Removing a Task</h5>
+                            <pre class="shadow-lg rounded"><code class="js hljs"> 
+const handleDeleteTask = async (task: Task) => {
+    if (!task) return;
+    
+    await supabase.from("revisions").insert([{
+        task_id: task.id,
+        profile_id: task.profile_id,
+        action: "delete",
+        changed_data: { 
+        title: task.title, 
+        description: task.description, 
+        status: task.status, 
+        user_id: userId 
+        }
+    }]);
+    
+    const { error: delError } = await supabase.from("tasks").delete().eq("id", task.id);
+    if (!delError) setTasks(tasks.filter(t => t.id !== task.id));
+};                                                          
+                            </code></pre>
+                            <p>Before deleting, a "delete" entry is logged in the revisions table with all task details for auditing</p>
+                            <p>The task is then removed from the database, and the local state updates to remove it from the list.</p>
+
+                            <h5 class="mt-5">Task Status Toggle</h5>
+                            <pre class="shadow-lg rounded"><code class="js hljs"> 
+const toggleTaskStatus = async (task: Task) => {
+    const newStatus = task.status === "done" ? "pending" : "done";
+    
+    const { error } = await supabase
+        .from("tasks")
+        .update({ status: newStatus, updated_at: new Date() })
+        .eq("id", task.id);
+    
+    if (!error) {
+        setTasks(tasks.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+        await supabase.from("revisions").insert([{
+        task_id: task.id,
+        profile_id: selectedProfileId,
+        action: "update",
+        changed_data: { status: newStatus, user_id: userId }
+        }]);
+    }
+};                                                                                      
+                            </code></pre>
+                            <p>Allows toggling a task between "pending" and "done".</p>
+                            <p>Updates are logged in the revisions table with the new status for tracking.</p>
+                        </section>
+                        <!--//docs-intro-->
+                    <!--//section-->
+
+                    <section class="docs-section" id="item-2-2">
+                        <h2 class="section-heading">Task Management for Admins</h2>
+                        <p>This component is designed specifically for admin users to view and manage tasks for a specific profile. Unlike the regular TodosPage, which is used by standard users to manage tasks for their own profiles, this admin page allows the admin to see tasks of any profile based on a profileId passed in the URL.</p>
+                        
+                        <h5 class="mt-5">Fetching Tasks and Revisions for a Profile</h5>
+                        <pre class="shadow-lg rounded"><code class="js hljs"> 
+const { data: taskData } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("profile_id", profileIdFromUrl);
+
+const { data: revData } = await supabase
+    .from("revisions")
+    .select("*, profile_id")
+    .eq("profile_id", profileIdFromUrl);
+
+const { data: allProfiles } = await supabase
+    .from("profiles")
+    .select("id, username");                                                                                                            
+                        </code></pre>
+
+                        <p>Here, all tasks and their revisions are fetched specifically for the selected profile. Unlike the regular user page, the admin can see tasks and revisions of profiles they do not own. Revisions are enriched with usernames (profile_username) for clarity, so admins know which profile each revision belongs to.</p>
+                        
+                        <h5 class="mt-5">Viewing Task Revisions</h5>
+                        <pre class="shadow-lg rounded"><code class="js hljs"> 
+const openRevisionsModal = (task: Task) => {
+    const filteredRevisions = revisions.filter(r => r.task_id === task.id);
+    setCurrentRevisions(filteredRevisions);
+    setCurrentTaskTitle(task.title);
+    setShowRevisionsModal(true);
+};                                                                                                          
+                        </code></pre>
+
+                        <p>This is a unique feature of the admin page. Admins can view a complete history of changes for any task.</p>
+                        <p>Each revision displays the action, timestamp, and changed data. This allows administrators to audit activity across all profiles, which is not available on the regular user page</p>
+                    
+                    </section>
+                    <!--//section-->
+                </article>
+                <!--//docs-article-->
+
+
+                <article class="docs-article" id="section-3">
+                    <header class="docs-header">
+                        <h1 class="docs-heading">Database Structure and Functionality</h1>
+                        <section class="docs-intro">
+                            <p>The application uses Supabase as its backend, which provides a PostgreSQL database and built-in authentication system. Users are authenticated via email and password through Supabase Auth. Once a user verifies their email, they can log in and create profiles, tasks, and perform CRUD operations, all tracked in a structured relational database.</p>
+                        </section>
+                        <!--//docs-intro-->
+                    </header>
+                    <section class="docs-section" id="item-3-1">
+                        <h2 class="section-heading">Tables</h2>
+                        
+                        <h5 class="mt-5">Profiles Table</h5>
+                        <pre class="shadow-lg rounded"><code class="sql hljs"> 
+create table profiles (
+    id uuid primary key default gen_random_uuid(),
+    account_id uuid not null references auth.users(id) on delete cascade,
+    username text not null unique,
+    created_at timestamp with time zone default now()
+);                                                                                                      
+                        </code></pre>
+
+                        <p>Each user can have multiple profiles, which are separate working spaces for tasks.</p>
+                        <p>username must be globally unique.</p>
+                        <p>account_id links the profile to the authenticated user.</p>
+                        <p>A trigger ensures max 3 profiles per user:</p>
+                        <pre class="shadow-lg rounded"><code class="sql hljs"> 
+create or replace function check_max_profiles()
+returns trigger as $$
+declare
+    profile_count int;
+begin
+    select count(*) into profile_count
+    from profiles
+    where account_id = new.account_id;
+
+    if profile_count >= 3 then
+    raise exception 'Korisnik ne može imati više od 3 profila';
+    end if;
+
+    return new;
+end;
+$$ language plpgsql;
+
+create trigger limit_profiles_per_account
+before insert on profiles
+for each row
+execute function check_max_profiles();                                                                                                   
+                        </code></pre>
+                        <p>This ensures the application enforces the rule: no more than 3 profiles per account.</p>
+
+                        <h5 class="mt-5">Roles Table</h5>
+                        <pre class="shadow-lg rounded"><code class="sql hljs"> 
+create table roles (
+    id uuid primary key default gen_random_uuid(),
+    account_id uuid references auth.users(id) on delete cascade,
+    role text check (role in ('user','superadmin')) default 'user'
+);                                                                                                      
+                        </code></pre>
+
+                        <p>Assigns a role to each user: either user or superadmin.</p>
+                        <p>Linked to auth.users via account_id.</p>
+                        <p>Used for authorization, e.g., only superadmin can view all user profiles and admin tasks.</p>
+
+                        <h5 class="mt-5">Tasks Table</h5>
+                        <pre class="shadow-lg rounded"><code class="sql hljs"> 
+create table tasks (
+    id uuid primary key default gen_random_uuid(),
+    profile_id uuid not null references profiles(id) on delete cascade,
+    title text not null,
+    description text,
+    status text not null check (status in ('pending', 'in_progress', 'done', 'deleted')) default 'pending',
+    created_at timestamptz not null default now(),
+    updated_at timestamptz default now()
+);                                                                                               
+                        </code></pre>
+
+                        <p>Tasks are linked to a specific profile, not directly to the user.</p>
+                        <p>status is constrained to pending, in_progress, done, or deleted.</p>
+                        <p>created_at and updated_at track task creation and modification.</p>
+                        <p><strong>All CRUD actions are reflected in the revisions table for auditing.</strong></p>
+
+                        <h5 class="mt-5">Revisions Table</h5>
+                        <pre class="shadow-lg rounded"><code class="sql hljs"> 
+create table revisions (
+    id uuid primary key default gen_random_uuid(),
+    task_id uuid references tasks(id) on delete cascade,
+    profile_id uuid references profiles(id),
+    action text check (action in ('create','update','delete')) not null,
+    changed_data jsonb,
+    created_at timestamp default now()
+);                                                                                                                         
+                        </code></pre>
+
+                        <p>Stores a history of changes for each task.</p>
+                        <p>action indicates the type of operation: create, update, delete.</p>
+                        <p>changed_data stores the exact modifications in JSON format.</p>
+                        <p>Linked to both tasks and profiles for traceability.</p>
+                        <p>Enables features like revision history modal in the application.</p>
+                    
+                    </section>
+                    <!--//section-->
+
+                    <section class="docs-section" id="item-3-2">
+                        <h2 class="section-heading">Relationships and Cascading Rules</h2>
+                        <p>The database uses foreign key relationships with ON DELETE CASCADE to automatically maintain data integrity. Here’s a breakdown:</p>
+
+                        <h5 class="mt-5">Users → Profiles</h5>
+                        <p>Foreign Key: profiles.account_id → auth.users.id</p>
+                        <p>Rule: ON DELETE CASCADE</p>
+                        <p>Meaning: If a user is deleted, all their associated profiles are automatically deleted.</p>
+                        <p>Purpose: Ensures no orphaned profiles exist after a user is removed.</p>
+                        <pre class="shadow-lg rounded"><code class="sql hljs"> 
+auth.users.id ──< profiles.account_id
+(delete user → deletes all their profiles)                                                                                                      
+                        </code></pre>
+
+                        <h5 class="mt-5">Profiles → Tasks</h5>
+                        <p>Foreign Key: tasks.profile_id → profiles.id</p>
+                        <p>Rule: ON DELETE CASCADE</p>
+                        <p>Meaning: Deleting a profile removes all tasks linked to that profile.</p>
+                        <p>Purpose: Each profile is a workspace; deleting it clears all tasks in that workspace.</p>
+                        <pre class="shadow-lg rounded"><code class="sql hljs"> 
+auth.users.id ──< profiles.account_id
+(delete user → deletes all their profiles)                                                                                                      
+                        </code></pre>
+
+                        <h5 class="mt-5">Tasks → Revisions</h5>
+                        <p>Foreign Key: revisions.task_id → tasks.id</p>
+                        <p>Rule: ON DELETE CASCADE</p>
+                        <p>Meaning: Removing a task also removes all revision history for that task.</p>
+                        <p>Purpose: Keeps revision data consistent with existing tasks.</p>
+                        <pre class="shadow-lg rounded"><code class="sql hljs"> 
+auth.users.id ──< profiles.account_id
+(delete user → deletes all their profiles)                                                                                                      
+                        </code></pre>
+
+                        <h5 class="mt-5">Profiles → Revisions</h5>
+                        <p>Foreign Key: revisions.profile_id → profiles.id</p>
+                        <p>Rule: No cascading needed (optional, but can add ON DELETE SET NULL)</p>
+                        <p>Meaning: Each revision is linked to a profile, so we know which profile performed the action.</p>
+                        <p>Purpose: Tracks task history by profile.</p>
+                        <pre class="shadow-lg rounded"><code class="sql hljs"> 
+profiles.id ── revisions.profile_id                                                                                                     
+                        </code></pre>
+
+                        <h5 class="mt-5">Visual Summary (ER Diagram)</h5>
+                        <p>Foreign Key: revisions.profile_id → profiles.id</p>
+                        <p>Rule: No cascading needed (optional, but can add ON DELETE SET NULL)</p>
+                        <p>Meaning: Each revision is linked to a profile, so we know which profile performed the action.</p>
+                        <p>Purpose: Tracks task history by profile.</p>
+                        <pre class="shadow-lg rounded"><code class="sql hljs"> 
+auth.users
+    │
+    │ 1 ──< many
+    ▼
+profiles
+    │
+    │ 1 ──< many
+    ▼
+tasks
+    │
+    │ 1 ──< many
+    ▼
+revisions                                                                                                                             
+                        </code></pre>
+                        <p>Delete a user → all their profiles are deleted.</p>
+                        <p>Delete a profile → all tasks for that profile are deleted.</p>
+                        <p>Delete a task → all revisions for that task are deleted.</p>
+                    </section>
+                    <!--//section-->
+                </article>
+                <!--//docs-article-->
+            </div>
+        </div>
+    </div>
+    <!--//docs-wrapper-->
+
+
+    <!-- Javascript -->
+    <script src="assets/plugins/popper.min.js"></script>
+    <script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+
+
+    <!-- Page Specific JS -->
+    <script src="assets/plugins/smoothscroll.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/highlight.min.js"></script>
+    <script src="assets/js/highlight-custom.js"></script>
+    <script src="assets/plugins/simplelightbox/simple-lightbox.min.js"></script>
+    <script src="assets/plugins/gumshoe/gumshoe.polyfills.min.js"></script>
+    <script src="assets/js/docs.js"></script>
+
+</body>
+
+</html>

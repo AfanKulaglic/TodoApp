@@ -48,7 +48,7 @@ export default function AdminTodosPage() {
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
 
-  // modal state
+
   const [showModal, setShowModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
 
@@ -77,14 +77,15 @@ export default function AdminTodosPage() {
         .from("tasks")
         .select("*")
         .eq("profile_id", profileIdFromUrl)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (taskError) console.error(taskError);
-      else setTasks(taskData || []);
+      else setTasksByDate(groupTasksByDate(taskData || []));
+
 
       const { data: revData, error: revError } = await supabase
         .from("revisions")
-        .select("*, profile_id")
+        .select("*")
         .eq("profile_id", profileIdFromUrl)
         .order("created_at", { ascending: true });
 
@@ -94,9 +95,8 @@ export default function AdminTodosPage() {
         return;
       }
 
-      const { data: allProfiles } = await supabase
-        .from("profiles")
-        .select("id, username");
+
+      const { data: allProfiles } = await supabase.from("profiles").select("id, username");
 
       const revWithUsername: Revision[] = (revData || []).map((r) => {
         const prof = allProfiles?.find((p) => p.id === r.profile_id);
@@ -106,8 +106,31 @@ export default function AdminTodosPage() {
       setRevisions(revWithUsername);
     };
 
+
     fetchTasksAndRevisions();
   }, [profileIdFromUrl]);
+
+  const [tasksByDate, setTasksByDate] = useState<{ [date: string]: Task[] }>({});
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const groupTasksByDate = (tasks: Task[]) => {
+    const groups: { [date: string]: Task[] } = {};
+    tasks.forEach((task) => {
+      const date = new Date(task.created_at).toISOString().split("T")[0];
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(task);
+    });
+    return groups;
+  };
+
+  const goPrev = () => {
+    if (currentSlide > 0) setCurrentSlide(currentSlide - 1);
+  };
+
+  const goNext = () => {
+    if (currentSlide < Object.keys(tasksByDate).length - 1) setCurrentSlide(currentSlide + 1);
+  };
+
 
   const handleAddTask = async () => {
     if (!newTitle.trim() || !profileIdFromUrl) return;
@@ -143,7 +166,18 @@ export default function AdminTodosPage() {
       .eq("id", task.id);
 
     if (!error) {
-      setTasks(tasks.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+
+      setTasksByDate(prev => {
+        const newGroups = { ...prev };
+        for (const date in newGroups) {
+          newGroups[date] = newGroups[date].map(t =>
+            t.id === task.id ? { ...t, status: newStatus } : t
+          );
+        }
+        return newGroups;
+      });
+
+
       await supabase.from("revisions").insert([{
         task_id: task.id,
         profile_id: profileIdFromUrl,
@@ -152,6 +186,7 @@ export default function AdminTodosPage() {
       }]);
     } else console.error(error);
   };
+
 
   const handleDeleteTask = async (taskId: string) => {
     const { error } = await supabase.from("tasks").delete().eq("id", taskId);
@@ -209,7 +244,7 @@ export default function AdminTodosPage() {
     }, 300);
   };
 
-  // Revisions modal state
+
   const [showRevisionsModal, setShowRevisionsModal] = useState(false);
   const [currentRevisions, setCurrentRevisions] = useState<Revision[]>([]);
   const [currentTaskTitle, setCurrentTaskTitle] = useState("");
@@ -233,44 +268,47 @@ export default function AdminTodosPage() {
       <div className="task-card">
         <h1>Admin - Zadaci za profil: {profile?.username || "Nepoznat profil"}</h1>
 
-        <ul className="task-list">
-          {tasks.map((task) => (
-            <li key={task.id} className="task-item">
-              <input
-                type="checkbox"
-                checked={task.status === "done"}
-                onChange={() => toggleTaskStatus(task)}
-                className="task-checkbox"
-              />
-              <span className="task-info">
-                <strong>{task.title}</strong>: {task.description}
-              </span>
+        <div className="slider-container">
+          <div className="slider-actions" style={{ marginTop:'2vh' }}>
+          
+          <button onClick={goNext} disabled={currentSlide === Object.keys(tasksByDate).length - 1} className="slider-btn">◀</button>  
+            <p>
+              {new Date(Object.keys(tasksByDate)[currentSlide]).toLocaleDateString("bs-BA", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              })}
+            </p>
+            <button onClick={goPrev} disabled={currentSlide === 0} className="slider-btn">▶</button>
+          </div>
 
-              <div className="task-actions">
-                <button
-                  onClick={() => startEditingWithModal(task)}
-                  className="button button-small"
-                >
-                  Uredi
-                </button>
-                <button
-                  onClick={() => handleDeleteTask(task.id)}
-                  className="button button-small button-danger"
-                >
-                  Izbriši
-                </button>
-                <span
-                  className="revisions-toggle"
-                  onClick={() => openRevisionsModal(task)}
-                >
-                  📊
-                </span>
+          {Object.keys(tasksByDate).length > 0 && (
+            <div className="task-slide active">
+              <ul className="task-list">
+                {tasksByDate[Object.keys(tasksByDate)[currentSlide]].map((task) => (
+                  <li key={task.id} className="task-item">
+                    <input
+                      type="checkbox"
+                      checked={task.status === "done"}
+                      onChange={() => toggleTaskStatus(task)}
+                      className="task-checkbox"
+                    />
+                    <span className="task-info">
+                      <strong>{task.title}</strong>: {task.description}
+                    </span>
 
-              </div>
+                    <div className="task-actions">
+                      <button onClick={() => startEditingWithModal(task)} className="button button-small">Uredi</button>
+                      <button onClick={() => handleDeleteTask(task.id)} className="button button-small button-danger">Izbriši</button>
+                      <span onClick={() => openRevisionsModal(task)} className="revisions-toggle">📊</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
 
-            </li>
-          ))}
-        </ul>
 
         <button onClick={() => setShowModal(true)} className="add-button">
           ➕
@@ -282,43 +320,43 @@ export default function AdminTodosPage() {
       {/* Revisions Modal */}
       {showRevisionsModal && (
         <div className="modal-overlay">
-            <div className="modal-content" style={{borderRadius: '20px',marginBottom: 'auto',marginTop: 'auto',color:'black'}}>
-              <h2>Revizija za zadatak: {currentTaskTitle}</h2>
+          <div className="modal-content" style={{ borderRadius: '20px', marginBottom: 'auto', marginTop: 'auto', color: 'black' }}>
+            <h2>Revizija za zadatak: {currentTaskTitle}</h2>
 
-              <table className="revisions-table">
-                <thead>
-                  <tr>
-                    <th>Akcija</th>
-                    <th>Vrijeme</th>
-                    <th>Promjene</th>
+            <table className="revisions-table">
+              <thead>
+                <tr>
+                  <th>Akcija</th>
+                  <th>Vrijeme</th>
+                  <th>Promjene</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentRevisions.map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.action}</td>
+                    <td>{new Date(r.created_at).toLocaleString()}</td>
+                    <td>
+                      {Object.entries(r.changed_data).map(([key, value]) => (
+                        <div key={key}>
+                          <strong>{key}</strong>: {value?.toString() || "–"}
+                        </div>
+                      ))}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {currentRevisions.map((r) => (
-                    <tr key={r.id}>
-                      <td>{r.action}</td>
-                      <td>{new Date(r.created_at).toLocaleString()}</td>
-                      <td>
-                        {Object.entries(r.changed_data).map(([key, value]) => (
-                          <div key={key}>
-                            <strong>{key}</strong>: {value?.toString() || "–"}
-                          </div>
-                        ))}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
 
-              <div className="modal-buttons">
-                <button
-                  onClick={() => setShowRevisionsModal(false)}
-                  className="button button-danger"
-                >
-                  Zatvori
-                </button>
-              </div>
+            <div className="modal-buttons">
+              <button
+                onClick={() => setShowRevisionsModal(false)}
+                className="button button-danger"
+              >
+                Zatvori
+              </button>
             </div>
+          </div>
         </div>
       )}
 

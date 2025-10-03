@@ -91,7 +91,7 @@ export default function ProfilesPage() {
     } else {
       setProfiles([...profiles, ...(profileData || [])])
       setNewUsername("")
-      setIsModalOpen(false) // zatvori modal kad se doda
+      setIsModalOpen(false) 
     }
   }
 
