@@ -10,6 +10,7 @@ type Task = {
   description: string;
   status: "pending" | "in_progress" | "done";
   created_at: string;
+  due_at?: string | null; // novi atribut
 };
 
 type ChangedData = {
@@ -17,7 +18,9 @@ type ChangedData = {
   description?: string;
   status?: "pending" | "in_progress" | "done";
   user_id?: string;
+  due_at?: string | null; // dodaj za revizije
 };
+
 
 type Revision = {
   id: string;
@@ -43,19 +46,19 @@ export default function TodosPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string>("");
 
-  
+
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
-  
+
   const [newDueDate, setNewDueDate] = useState(""); // yyyy-mm-dd
-const [newDueTime, setNewDueTime] = useState(""); // HH:MM
+  const [newDueTime, setNewDueTime] = useState(""); // HH:MM
 
-const [editingDueDate, setEditingDueDate] = useState("");
-const [editingDueTime, setEditingDueTime] = useState("");
+  const [editingDueDate, setEditingDueDate] = useState("");
+  const [editingDueTime, setEditingDueTime] = useState("");
 
 
-  
+
   const [showModal, setShowModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
 
@@ -92,12 +95,18 @@ const [editingDueTime, setEditingDueTime] = useState("");
         .from("tasks")
         .select("*")
         .eq("profile_id", selectedProfileId)
-        .order("created_at", { ascending: false }); 
+        .order("due_at", { ascending: true }); // sortiraj po due_at
 
       if (error) console.error(error);
       else {
         const grouped = groupTasksByDate(data || []);
         setTasksByDate(grouped);
+
+        // pronađi index današnjeg datuma
+        const today = new Date().toISOString().split("T")[0]; // npr "2025-10-04"
+        const allDates = Object.keys(grouped).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+        const todayIndex = allDates.findIndex(d => d === today);
+        setCurrentSlide(todayIndex >= 0 ? todayIndex : 0); // ako nema danas, prikaži prvi
       }
     };
 
@@ -105,14 +114,22 @@ const [editingDueTime, setEditingDueTime] = useState("");
   }, [selectedProfileId]);
 
 
-  
+
+
   const handleAddTask = async () => {
     if (!newTitle.trim() || !selectedProfileId) return;
     setLoading(true);
 
+    const due_datetime = newDueDate && newDueTime ? new Date(`${newDueDate}T${newDueTime}`) : null;
+
     const { data, error } = await supabase
       .from("tasks")
-      .insert([{ profile_id: selectedProfileId, title: newTitle, description: newDescription }])
+      .insert([{
+        profile_id: selectedProfileId,
+        title: newTitle,
+        description: newDescription,
+        due_at: due_datetime
+      }])
       .select();
 
     if (data && data[0]) {
@@ -120,7 +137,7 @@ const [editingDueTime, setEditingDueTime] = useState("");
         task_id: data[0].id,
         profile_id: selectedProfileId,
         action: "create",
-        changed_data: { title: newTitle, description: newDescription, user_id: userId }
+        changed_data: { title: newTitle, description: newDescription, due_at: due_datetime?.toISOString(), user_id: userId }
       }]);
     }
 
@@ -135,8 +152,8 @@ const [editingDueTime, setEditingDueTime] = useState("");
 
   const toggleTaskStatus = async (task: Task) => {
     const newStatus = task.status === "done" ? "pending" : "done";
-  
-    
+
+
     setTasksByDate(prev => {
       const dateKey = task.created_at.split("T")[0];
       return {
@@ -146,13 +163,13 @@ const [editingDueTime, setEditingDueTime] = useState("");
         ),
       };
     });
-  
-    
+
+
     const { error } = await supabase
       .from("tasks")
       .update({ status: newStatus, updated_at: new Date() })
       .eq("id", task.id);
-  
+
     if (!error) {
       await supabase.from("revisions").insert([{
         task_id: task.id,
@@ -162,7 +179,7 @@ const [editingDueTime, setEditingDueTime] = useState("");
       }]);
     } else console.error(error);
   };
-  
+
 
   const handleDeleteTask = async (task: Task) => {
     if (!task) return;
@@ -196,26 +213,35 @@ const [editingDueTime, setEditingDueTime] = useState("");
     setEditingTaskId(task.id);
     setEditingTitle(task.title);
     setEditingDescription(task.description || "");
+    setEditingDueDate(task.due_at ? task.due_at.split("T")[0] : "");
+    setEditingDueTime(task.due_at ? task.due_at.split("T")[1]?.substring(0,5) : "");
     setShowModal(true);
   };
 
   const saveEditing = async () => {
     if (!editingTaskId) return;
+    const due_datetime = editingDueDate && editingDueTime ? new Date(`${editingDueDate}T${editingDueTime}`) : null;
+
     const { error } = await supabase
       .from("tasks")
-      .update({ title: editingTitle, description: editingDescription, updated_at: new Date() })
+      .update({
+        title: editingTitle,
+        description: editingDescription,
+        due_at: due_datetime,
+        updated_at: new Date()
+      })
       .eq("id", editingTaskId);
 
     if (!error) {
       setTasks(tasks.map(t =>
-        t.id === editingTaskId ? { ...t, title: editingTitle, description: editingDescription } : t
+        t.id === editingTaskId ? { ...t, title: editingTitle, description: editingDescription, due_at: due_datetime?.toISOString() } : t
       ));
 
       await supabase.from("revisions").insert([{
         task_id: editingTaskId,
         profile_id: selectedProfileId,
         action: "update",
-        changed_data: { title: editingTitle, description: editingDescription, user_id: userId }
+        changed_data: { title: editingTitle, description: editingDescription, due_at: due_datetime?.toISOString(), user_id: userId }
       }]);
 
       closeModal();
@@ -232,14 +258,19 @@ const [editingDueTime, setEditingDueTime] = useState("");
       setEditingDescription("");
       setNewTitle("");
       setNewDescription("");
-    }, 300); 
+      setNewDueDate("");
+      setNewDueTime("");
+      setEditingDueDate("");
+      setEditingDueTime("");
+    }, 300);
   };
 
   const groupTasksByDate = (tasks: Task[]) => {
     const groups: { [date: string]: Task[] } = {};
 
     tasks.forEach((task) => {
-      const date = new Date(task.created_at).toISOString().split("T")[0]; 
+      if (!task.due_at) return;
+      const date = new Date(task.due_at).toISOString().split("T")[0];
       if (!groups[date]) groups[date] = [];
       groups[date].push(task);
     });
@@ -247,11 +278,12 @@ const [editingDueTime, setEditingDueTime] = useState("");
     return groups;
   };
 
+
   const [tasksByDate, setTasksByDate] = useState<{ [date: string]: Task[] }>({});
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const dates = Object.keys(tasksByDate).sort(
-    (a, b) => new Date(b).getTime() - new Date(a).getTime()
+    (a, b) => new Date(a).getTime() - new Date(b).getTime()
   );
 
   const goPrev = () => {
@@ -263,18 +295,16 @@ const [editingDueTime, setEditingDueTime] = useState("");
   };
 
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return ""; 
-  
+    if (!dateStr) return "";
     const [year, month, day] = dateStr.split("-").map(Number);
     const date = new Date(year, month - 1, day);
-  
     const weekday = date.toLocaleDateString("bs-BA", { weekday: "long" });
     const monthName = date.toLocaleDateString("bs-BA", { month: "long" });
-  
     return `${weekday}, ${day}. ${monthName}`;
   };
-  
-  
+
+
+
 
 
   return (
@@ -305,18 +335,17 @@ const [editingDueTime, setEditingDueTime] = useState("");
 
         <div className="slider-container">
           <div className="slider-actions">
+            <button onClick={goPrev} disabled={currentSlide === 0} className="slider-btn">
+              ◀
+            </button>
+            <p>
+              {formatDate(dates[currentSlide])}
+            </p>
             <button
               onClick={goNext}
               disabled={currentSlide === dates.length - 1}
               className="slider-btn"
             >
-              ◀
-            </button>
-            <p>
-  {formatDate(dates[currentSlide])}
-</p>
-
-            <button onClick={goPrev} disabled={currentSlide === 0} className="slider-btn">
               ▶
             </button>
           </div>
@@ -338,6 +367,7 @@ const [editingDueTime, setEditingDueTime] = useState("");
                     >
                       <strong>{task.title}</strong>: {task.description}
                     </span>
+
 
                     <div className="task-actions">
                       <button
@@ -383,6 +413,17 @@ const [editingDueTime, setEditingDueTime] = useState("");
               onChange={(e) => editingTaskId ? setEditingDescription(e.target.value) : setNewDescription(e.target.value)}
               className="input"
             />
+            <input type="date"
+  value={editingTaskId ? editingDueDate : newDueDate}
+  onChange={(e) => editingTaskId ? setEditingDueDate(e.target.value) : setNewDueDate(e.target.value)}
+  className="input"
+/>
+<input type="time"
+  value={editingTaskId ? editingDueTime : newDueTime}
+  onChange={(e) => editingTaskId ? setEditingDueTime(e.target.value) : setNewDueTime(e.target.value)}
+  className="input"
+/>
+
             <div className="modal-actions">
               <button
                 onClick={editingTaskId ? saveEditing : handleAddTask}

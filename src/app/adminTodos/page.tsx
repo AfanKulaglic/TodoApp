@@ -11,6 +11,7 @@ type Task = {
   description: string;
   status: "pending" | "in_progress" | "done";
   created_at: string;
+  due_at?: string | null;
 };
 
 type ChangedData = {
@@ -18,6 +19,7 @@ type ChangedData = {
   description?: string;
   status?: "pending" | "in_progress" | "done" | "deleted";
   user_id?: string;
+  due_at?: string | null;
 };
 
 type Revision = {
@@ -38,20 +40,34 @@ type Profile = {
 export default function AdminTodosPage() {
   const searchParams = useSearchParams();
   const profileIdFromUrl = searchParams.get("profileId") || "";
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [revisions, setRevisions] = useState<Revision[]>([]);
+
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [newDueDate, setNewDueDate] = useState("");
+  const [newDueTime, setNewDueTime] = useState("");
+
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
+  const [editingDueDate, setEditingDueDate] = useState("");
+  const [editingDueTime, setEditingDueTime] = useState("");
 
-
+  const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
 
+  const [tasksByDate, setTasksByDate] = useState<{ [date: string]: Task[] }>({});
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const [showRevisionsModal, setShowRevisionsModal] = useState(false);
+  const [currentRevisions, setCurrentRevisions] = useState<Revision[]>([]);
+  const [currentTaskTitle, setCurrentTaskTitle] = useState("");
+
+  // Fetch profile
   useEffect(() => {
     if (!profileIdFromUrl) return;
 
@@ -61,7 +77,6 @@ export default function AdminTodosPage() {
         .select("id, username")
         .eq("id", profileIdFromUrl)
         .single();
-
       if (error) console.error(error);
       else setProfile(data);
     };
@@ -69,6 +84,7 @@ export default function AdminTodosPage() {
     fetchProfile();
   }, [profileIdFromUrl]);
 
+  // Fetch tasks & revisions
   useEffect(() => {
     if (!profileIdFromUrl) return;
 
@@ -77,11 +93,21 @@ export default function AdminTodosPage() {
         .from("tasks")
         .select("*")
         .eq("profile_id", profileIdFromUrl)
-        .order("created_at", { ascending: false });
+        .order("due_at", { ascending: true });
 
       if (taskError) console.error(taskError);
-      else setTasksByDate(groupTasksByDate(taskData || []));
+      else {
+        const grouped = groupTasksByDate(taskData || []);
+        setTasksByDate(grouped);
 
+        // automatski prikaz danasnjih zadataka
+        const today = new Date().toISOString().split("T")[0];
+        const allDates = Object.keys(grouped).sort(
+          (a, b) => new Date(a).getTime() - new Date(b).getTime()
+        );
+        const todayIndex = allDates.findIndex(d => d === today);
+        setCurrentSlide(todayIndex >= 0 ? todayIndex : 0);
+      }
 
       const { data: revData, error: revError } = await supabase
         .from("revisions")
@@ -95,7 +121,6 @@ export default function AdminTodosPage() {
         return;
       }
 
-
       const { data: allProfiles } = await supabase.from("profiles").select("id, username");
 
       const revWithUsername: Revision[] = (revData || []).map((r) => {
@@ -106,17 +131,14 @@ export default function AdminTodosPage() {
       setRevisions(revWithUsername);
     };
 
-
     fetchTasksAndRevisions();
   }, [profileIdFromUrl]);
-
-  const [tasksByDate, setTasksByDate] = useState<{ [date: string]: Task[] }>({});
-  const [currentSlide, setCurrentSlide] = useState(0);
 
   const groupTasksByDate = (tasks: Task[]) => {
     const groups: { [date: string]: Task[] } = {};
     tasks.forEach((task) => {
-      const date = new Date(task.created_at).toISOString().split("T")[0];
+      if (!task.due_at) return;
+      const date = new Date(task.due_at).toISOString().split("T")[0];
       if (!groups[date]) groups[date] = [];
       groups[date].push(task);
     });
@@ -131,14 +153,20 @@ export default function AdminTodosPage() {
     if (currentSlide < Object.keys(tasksByDate).length - 1) setCurrentSlide(currentSlide + 1);
   };
 
-
   const handleAddTask = async () => {
     if (!newTitle.trim() || !profileIdFromUrl) return;
     setLoading(true);
 
+    const due_datetime = newDueDate && newDueTime ? new Date(`${newDueDate}T${newDueTime}`) : null;
+
     const { data, error } = await supabase
       .from("tasks")
-      .insert([{ profile_id: profileIdFromUrl, title: newTitle, description: newDescription }])
+      .insert([{
+        profile_id: profileIdFromUrl,
+        title: newTitle,
+        description: newDescription,
+        due_at: due_datetime
+      }])
       .select();
 
     setLoading(false);
@@ -147,11 +175,12 @@ export default function AdminTodosPage() {
     else if (data && data[0]) {
       setTasks([...tasks, data[0]]);
 
+      // Dodano za reviziju sa due_at
       await supabase.from("revisions").insert([{
         task_id: data[0].id,
         profile_id: profileIdFromUrl,
         action: "create",
-        changed_data: { title: newTitle, description: newDescription }
+        changed_data: { title: newTitle, description: newDescription, due_at: due_datetime?.toISOString() }
       }]);
     }
 
@@ -166,7 +195,6 @@ export default function AdminTodosPage() {
       .eq("id", task.id);
 
     if (!error) {
-
       setTasksByDate(prev => {
         const newGroups = { ...prev };
         for (const date in newGroups) {
@@ -177,7 +205,6 @@ export default function AdminTodosPage() {
         return newGroups;
       });
 
-
       await supabase.from("revisions").insert([{
         task_id: task.id,
         profile_id: profileIdFromUrl,
@@ -186,7 +213,6 @@ export default function AdminTodosPage() {
       }]);
     } else console.error(error);
   };
-
 
   const handleDeleteTask = async (taskId: string) => {
     const { error } = await supabase.from("tasks").delete().eq("id", taskId);
@@ -205,26 +231,36 @@ export default function AdminTodosPage() {
     setEditingTaskId(task.id);
     setEditingTitle(task.title);
     setEditingDescription(task.description || "");
+    setEditingDueDate(task.due_at ? task.due_at.split("T")[0] : "");
+    setEditingDueTime(task.due_at ? task.due_at.split("T")[1]?.substring(0,5) : "");
     setShowModal(true);
   };
 
   const saveEditing = async () => {
     if (!editingTaskId) return;
+
+    const due_datetime = editingDueDate && editingDueTime ? new Date(`${editingDueDate}T${editingDueTime}`) : null;
+
     const { error } = await supabase
       .from("tasks")
-      .update({ title: editingTitle, description: editingDescription, updated_at: new Date() })
+      .update({
+        title: editingTitle,
+        description: editingDescription,
+        due_at: due_datetime,
+        updated_at: new Date()
+      })
       .eq("id", editingTaskId);
 
     if (!error) {
       setTasks(tasks.map(t =>
-        t.id === editingTaskId ? { ...t, title: editingTitle, description: editingDescription } : t
+        t.id === editingTaskId ? { ...t, title: editingTitle, description: editingDescription, due_at: due_datetime?.toISOString() } : t
       ));
 
       await supabase.from("revisions").insert([{
         task_id: editingTaskId,
         profile_id: profileIdFromUrl,
         action: "update",
-        changed_data: { title: editingTitle, description: editingDescription }
+        changed_data: { title: editingTitle, description: editingDescription, due_at: due_datetime?.toISOString() }
       }]);
 
       closeModal();
@@ -241,27 +277,19 @@ export default function AdminTodosPage() {
       setEditingDescription("");
       setNewTitle("");
       setNewDescription("");
+      setNewDueDate("");
+      setNewDueTime("");
+      setEditingDueDate("");
+      setEditingDueTime("");
     }, 300);
   };
 
-
-  const [showRevisionsModal, setShowRevisionsModal] = useState(false);
-  const [currentRevisions, setCurrentRevisions] = useState<Revision[]>([]);
-  const [currentTaskTitle, setCurrentTaskTitle] = useState("");
-
-
   const openRevisionsModal = (task: Task) => {
     const filteredRevisions = revisions.filter(r => r.task_id === task.id);
-    console.log("Otvaram revisions za task:", task.id, task.title);
-    console.log("Filtered revisions:", filteredRevisions);
-
     setCurrentRevisions(filteredRevisions);
     setCurrentTaskTitle(task.title);
     setShowRevisionsModal(true);
   };
-
-
-
 
   return (
     <div className="task-section">
@@ -270,22 +298,21 @@ export default function AdminTodosPage() {
 
         <div className="slider-container">
           <div className="slider-actions" style={{ marginTop:'2vh' }}>
-          
-          <button onClick={goNext} disabled={currentSlide === Object.keys(tasksByDate).length - 1} className="slider-btn">◀</button>  
+            <button onClick={goPrev} disabled={currentSlide === 0} className="slider-btn">◀</button>  
             <p>
-              {new Date(Object.keys(tasksByDate)[currentSlide]).toLocaleDateString("bs-BA", {
+              {Object.keys(tasksByDate)[currentSlide] && new Date(Object.keys(tasksByDate)[currentSlide]).toLocaleDateString("bs-BA", {
                 weekday: "long",
                 day: "numeric",
                 month: "long",
               })}
             </p>
-            <button onClick={goPrev} disabled={currentSlide === 0} className="slider-btn">▶</button>
+            <button onClick={goNext} disabled={currentSlide === Object.keys(tasksByDate).length - 1} className="slider-btn">▶</button>
           </div>
 
           {Object.keys(tasksByDate).length > 0 && (
             <div className="task-slide active">
               <ul className="task-list">
-                {tasksByDate[Object.keys(tasksByDate)[currentSlide]].map((task) => (
+                {tasksByDate[Object.keys(tasksByDate)[currentSlide]]?.map((task) => (
                   <li key={task.id} className="task-item">
                     <input
                       type="checkbox"
@@ -309,20 +336,50 @@ export default function AdminTodosPage() {
           )}
         </div>
 
-
-        <button onClick={() => setShowModal(true)} className="add-button">
-          ➕
-        </button>
+        <button onClick={() => setShowModal(true)} className="add-button">➕</button>
       </div>
 
-      {/* Modal */}
+      {/* Modal za zadatke */}
+      {showModal && (
+        <div className={`modal-overlay ${modalClosing ? "fade-out" : "fade-in"}`}>
+          <div className={`modal-content ${modalClosing ? "slide-down" : "slide-up"}`}>
+            <h2>{editingTaskId ? "Uredi Zadatak" : "Novi Zadatak"}</h2>
+            <input type="text" placeholder="Naslov zadatka"
+              value={editingTaskId ? editingTitle : newTitle}
+              onChange={(e) => editingTaskId ? setEditingTitle(e.target.value) : setNewTitle(e.target.value)}
+              className="input"
+            />
+            <input type="text" placeholder="Opis zadatka"
+              value={editingTaskId ? editingDescription : newDescription}
+              onChange={(e) => editingTaskId ? setEditingDescription(e.target.value) : setNewDescription(e.target.value)}
+              className="input"
+            />
+            <input type="date"
+  value={editingTaskId ? editingDueDate : newDueDate}
+  onChange={(e) => editingTaskId ? setEditingDueDate(e.target.value) : setNewDueDate(e.target.value)}
+  className="input"
+/>
+<input type="time"
+  value={editingTaskId ? editingDueTime : newDueTime}
+  onChange={(e) => editingTaskId ? setEditingDueTime(e.target.value) : setNewDueTime(e.target.value)}
+  className="input"
+/>
 
-      {/* Revisions Modal */}
+            <div className="modal-buttons">
+              <button onClick={editingTaskId ? saveEditing : handleAddTask} disabled={loading} className="button">
+                {loading ? "Spremanje..." : "Potvrdi"}
+              </button>
+              <button onClick={closeModal} className="button button-danger">Zatvori</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal za revizije */}
       {showRevisionsModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ borderRadius: '20px', marginBottom: 'auto', marginTop: 'auto', color: 'black' }}>
             <h2>Revizija za zadatak: {currentTaskTitle}</h2>
-
             <table className="revisions-table">
               <thead>
                 <tr>
@@ -347,56 +404,13 @@ export default function AdminTodosPage() {
                 ))}
               </tbody>
             </table>
-
             <div className="modal-buttons">
-              <button
-                onClick={() => setShowRevisionsModal(false)}
-                className="button button-danger"
-              >
-                Zatvori
-              </button>
+              <button onClick={() => setShowRevisionsModal(false)} className="button button-danger">Zatvori</button>
             </div>
           </div>
         </div>
       )}
 
-
-
-
-
-      {showModal && (
-        <div className={`modal-overlay ${modalClosing ? "fade-out" : "fade-in"}`}>
-          <div className={`modal-content ${modalClosing ? "slide-down" : "slide-up"}`}>
-            <h2>{editingTaskId ? "Uredi Zadatak" : "Novi Zadatak"}</h2>
-            <input
-              type="text"
-              placeholder="Naslov zadatka"
-              value={editingTaskId ? editingTitle : newTitle}
-              onChange={(e) => editingTaskId ? setEditingTitle(e.target.value) : setNewTitle(e.target.value)}
-              className="input"
-            />
-            <input
-              type="text"
-              placeholder="Opis zadatka"
-              value={editingTaskId ? editingDescription : newDescription}
-              onChange={(e) => editingTaskId ? setEditingDescription(e.target.value) : setNewDescription(e.target.value)}
-              className="input"
-            />
-            <div className="modal-buttons">
-              <button
-                onClick={editingTaskId ? saveEditing : handleAddTask}
-                disabled={loading}
-                className="button"
-              >
-                {loading ? "Spremanje..." : "Potvrdi"}
-              </button>
-              <button onClick={closeModal} className="button button-danger">
-                Zatvori
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
