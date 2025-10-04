@@ -214,7 +214,7 @@ export default function TodosPage() {
     setEditingTitle(task.title);
     setEditingDescription(task.description || "");
     setEditingDueDate(task.due_at ? task.due_at.split("T")[0] : "");
-    setEditingDueTime(task.due_at ? task.due_at.split("T")[1]?.substring(0,5) : "");
+    setEditingDueTime(task.due_at ? task.due_at.split("T")[1]?.substring(0, 5) : "");
     setShowModal(true);
   };
 
@@ -414,15 +414,15 @@ export default function TodosPage() {
               className="input"
             />
             <input type="date"
-  value={editingTaskId ? editingDueDate : newDueDate}
-  onChange={(e) => editingTaskId ? setEditingDueDate(e.target.value) : setNewDueDate(e.target.value)}
-  className="input"
-/>
-<input type="time"
-  value={editingTaskId ? editingDueTime : newDueTime}
-  onChange={(e) => editingTaskId ? setEditingDueTime(e.target.value) : setNewDueTime(e.target.value)}
-  className="input"
-/>
+              value={editingTaskId ? editingDueDate : newDueDate}
+              onChange={(e) => editingTaskId ? setEditingDueDate(e.target.value) : setNewDueDate(e.target.value)}
+              className="input"
+            />
+            <input type="time"
+              value={editingTaskId ? editingDueTime : newDueTime}
+              onChange={(e) => editingTaskId ? setEditingDueTime(e.target.value) : setNewDueTime(e.target.value)}
+              className="input"
+            />
 
             <div className="modal-actions">
               <button

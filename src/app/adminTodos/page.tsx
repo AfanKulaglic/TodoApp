@@ -67,7 +67,7 @@ export default function AdminTodosPage() {
   const [currentRevisions, setCurrentRevisions] = useState<Revision[]>([]);
   const [currentTaskTitle, setCurrentTaskTitle] = useState("");
 
-  // Fetch profile
+  
   useEffect(() => {
     if (!profileIdFromUrl) return;
 
@@ -84,7 +84,7 @@ export default function AdminTodosPage() {
     fetchProfile();
   }, [profileIdFromUrl]);
 
-  // Fetch tasks & revisions
+  
   useEffect(() => {
     if (!profileIdFromUrl) return;
 
@@ -100,7 +100,7 @@ export default function AdminTodosPage() {
         const grouped = groupTasksByDate(taskData || []);
         setTasksByDate(grouped);
 
-        // automatski prikaz danasnjih zadataka
+        
         const today = new Date().toISOString().split("T")[0];
         const allDates = Object.keys(grouped).sort(
           (a, b) => new Date(a).getTime() - new Date(b).getTime()
@@ -175,7 +175,7 @@ export default function AdminTodosPage() {
     else if (data && data[0]) {
       setTasks([...tasks, data[0]]);
 
-      // Dodano za reviziju sa due_at
+      
       await supabase.from("revisions").insert([{
         task_id: data[0].id,
         profile_id: profileIdFromUrl,
@@ -232,7 +232,7 @@ export default function AdminTodosPage() {
     setEditingTitle(task.title);
     setEditingDescription(task.description || "");
     setEditingDueDate(task.due_at ? task.due_at.split("T")[0] : "");
-    setEditingDueTime(task.due_at ? task.due_at.split("T")[1]?.substring(0,5) : "");
+    setEditingDueTime(task.due_at ? task.due_at.split("T")[1]?.substring(0, 5) : "");
     setShowModal(true);
   };
 
@@ -297,8 +297,8 @@ export default function AdminTodosPage() {
         <h1>Admin - Zadaci za profil: {profile?.username || "Nepoznat profil"}</h1>
 
         <div className="slider-container">
-          <div className="slider-actions" style={{ marginTop:'2vh' }}>
-            <button onClick={goPrev} disabled={currentSlide === 0} className="slider-btn">◀</button>  
+          <div className="slider-actions" style={{ marginTop: '2vh' }}>
+            <button onClick={goPrev} disabled={currentSlide === 0} className="slider-btn">◀</button>
             <p>
               {Object.keys(tasksByDate)[currentSlide] && new Date(Object.keys(tasksByDate)[currentSlide]).toLocaleDateString("bs-BA", {
                 weekday: "long",
@@ -355,15 +355,15 @@ export default function AdminTodosPage() {
               className="input"
             />
             <input type="date"
-  value={editingTaskId ? editingDueDate : newDueDate}
-  onChange={(e) => editingTaskId ? setEditingDueDate(e.target.value) : setNewDueDate(e.target.value)}
-  className="input"
-/>
-<input type="time"
-  value={editingTaskId ? editingDueTime : newDueTime}
-  onChange={(e) => editingTaskId ? setEditingDueTime(e.target.value) : setNewDueTime(e.target.value)}
-  className="input"
-/>
+              value={editingTaskId ? editingDueDate : newDueDate}
+              onChange={(e) => editingTaskId ? setEditingDueDate(e.target.value) : setNewDueDate(e.target.value)}
+              className="input"
+            />
+            <input type="time"
+              value={editingTaskId ? editingDueTime : newDueTime}
+              onChange={(e) => editingTaskId ? setEditingDueTime(e.target.value) : setNewDueTime(e.target.value)}
+              className="input"
+            />
 
             <div className="modal-buttons">
               <button onClick={editingTaskId ? saveEditing : handleAddTask} disabled={loading} className="button">
