@@ -8,19 +8,19 @@ html, body {
   color: #e0e0e0;
 }
 
-/* Centriranje cijele sekcije */
+
 .section-center {
   display: flex;
   justify-content: center;
-  height: 100vh; /* Full height */
-  color: #ffffff; /* bijeli tekst */
+  height: 100vh;
+  color: #ffffff;
   font-family: Arial, sans-serif;
 }
 
-/* Karta/form container */
+
 .card {
   display: flex;
-  flex-direction: column; /* sve jedno ispod drugog */
+  flex-direction: column;
   align-items: center;
   padding: 2rem;
   border-radius: 10px;
@@ -47,12 +47,12 @@ html, body {
 
   .form {
     display: flex;
-    flex-direction: column; /* sve jedno ispod drugog */
+    flex-direction: column;
     gap: 1rem;
     width: 100%;
   }
   
-  /* Inputi */
+ 
   .input {
     padding: 0.75rem;
     border-radius: 5px;
@@ -67,7 +67,7 @@ html, body {
     border: 1px solid #2c3e9a;
   }
   
-  /* Dugme */
+ 
   .button {
     padding: 0.75rem;
     border-radius: 5px;
@@ -83,7 +83,7 @@ html, body {
     background-color: #2c3e9a;
   }
   
-  /* Naslov */
+ 
   .card h1 {
     margin-bottom: 1rem;
     color: white;
@@ -102,27 +102,27 @@ html, body {
 
 
 
-/* Nav.css ili globals.css */
 
-/* Navbar container */
+
+
 .navbar {
   width: 100%;
-  background-color: #273988; /* tamna pozadina */
+  background-color: #273988;
   padding: 1rem 0;
   height: 2rem;
-  justify-content: center; /* centriranje horizontalno */
+  justify-content: center;
 }
 
-/* Unutrašnji container */
+
 .nav-container {
   display: flex;
-  flex-direction: row; /* sve jedno ispod drugog */
+  flex-direction: row;
   padding-inline-start: 1rem;
   align-items: center;
-  gap: 1rem; /* razmak između dugmadi/linkova */
+  gap: 1rem;
 }
 
-/* Linkovi i dugmad */
+
 .nav-link {
   color: #ffffff;
   text-decoration: none;
@@ -130,7 +130,7 @@ html, body {
   border: none;
   border-radius: 6px;
   padding: 0.5rem 0.4rem;
-  width: 92px; /* fiksna širina da budu uniformni */
+  width: 92px;
   text-align: center;
   cursor: pointer;
   font-size: 1rem;
@@ -151,10 +151,10 @@ html, body {
 }
 
 .nav-link:hover {
-  background-color: #2c3e9a; /* efekt hover */
+  background-color: #2c3e9a;
 }
 
-/* Responsive za manje ekrane */
+
 @media (max-width: 400px) {
   .nav-link {
     width: 120px;
@@ -172,13 +172,13 @@ html, body {
 .profiles-page {
   display: flex;
   justify-content: center;
-  color: #ffffff; /* bijeli tekst */
+  color: #ffffff;
   font-family: Arial, sans-serif;
 }
 
 .profiles-card {
   display: flex;
-  flex-direction: column; /* sve jedno ispod drugog */
+  flex-direction: column;
   border-radius: 10px;
   width: 90vw;
   padding-left: 1rem;
@@ -272,7 +272,7 @@ html, body {
   cursor: pointer;
 }
 
-/* Overlay iza modala */
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -282,12 +282,12 @@ html, body {
   background: rgba(0,0,0,0.6);
   display: flex;
   justify-content: center;
-  align-items: flex-end; /* modal dolazi odozdo */
+  align-items: flex-end;
   animation: fadeIn 0.3s ease forwards;
   z-index: 999;
 }
 
-/* Sadržaj modala */
+
 .modal-content {
   background: #fff;
   width: 100%;
@@ -336,14 +336,14 @@ html, body {
   }
 }
 
-/* Akcije unutar modala */
+
 .modal-actions {
   display: flex;
   justify-content: space-between;
   margin-top: 15px;
 }
 
-/* Animacije */
+
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
@@ -364,7 +364,7 @@ html, body {
 .task-section {
   display: flex;
   justify-content: center;
-  color: #ffffff; /* bijeli tekst */
+  color: #ffffff;
   font-family: Arial, sans-serif;
 
   h1 {
@@ -376,7 +376,7 @@ html, body {
 
 .task-card {  
   display: flex;
-  flex-direction: column; /* sve jedno ispod drugog */
+  flex-direction: column;
   border-radius: 10px;
   width: 90vw;
   padding-left: 1rem;
@@ -513,8 +513,8 @@ html, body {
 }
 
 .task-checkbox {
-  appearance: none; /* Firefox & modern browsers */
-  -webkit-appearance: none; /* Safari & Chrome */
+  appearance: none;
+  -webkit-appearance: none;
   min-width: 20px;
   min-height: 20px;
   border: 2px solid #3f51b5;
@@ -550,11 +550,11 @@ html, body {
 }
 
 .task-actions {
-  margin-left: auto;       /* drži task-actions na desnoj strani */
-  display: flex;           /* aktivira flex layout */
-  flex-direction: row;     /* elementi u jednom redu */
-  flex-wrap: nowrap;       /* sprječava prelazak u novi red */
-  gap: 1vh;                /* razmak između buttona, možeš i margin-right maknuti */
+  margin-left: auto;      
+  display: flex;          
+  flex-direction: row;    
+  flex-wrap: nowrap;      
+  gap: 1vh;               
 
   button {
     padding: 0.75rem;
@@ -565,7 +565,7 @@ html, body {
     font-size: 1rem;
     cursor: pointer;
     transition: background-color 0.2s;
-    flex: 0 0 auto;        /* čuva širinu buttona, ne raste i ne skuplja se */
+    flex: 0 0 auto;       
   }
 
   .button-danger {
@@ -620,7 +620,7 @@ html, body {
   display: block;
 }
 
-/* Modal tabela */
+
 .revisions-table {
   width: 100%;
   border-collapse: collapse;
@@ -652,7 +652,7 @@ html, body {
   margin-bottom: 4px;
 }
 
-/* Modal overlay i sadržaj */
+
 
 .modal h2 {
   margin-top: 0;
@@ -669,7 +669,7 @@ html, body {
   margin-left: 10px;
 }
 
-/* Responsive za mobilne uređaje */
+
 @media (max-width: 600px) {
   .revisions-table th,
   .revisions-table td {

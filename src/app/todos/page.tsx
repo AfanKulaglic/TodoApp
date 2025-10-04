@@ -89,29 +89,48 @@ export default function TodosPage() {
 
   useEffect(() => {
     if (!selectedProfileId) return;
-
+  
     const fetchTasks = async () => {
       const { data, error } = await supabase
         .from("tasks")
         .select("*")
         .eq("profile_id", selectedProfileId)
-        .order("due_at", { ascending: true }); // sortiraj po due_at
-
+        .order("due_at", { ascending: true });
+  
       if (error) console.error(error);
       else {
         const grouped = groupTasksByDate(data || []);
         setTasksByDate(grouped);
-
-        // pronađi index današnjeg datuma
-        const today = new Date().toISOString().split("T")[0]; // npr "2025-10-04"
-        const allDates = Object.keys(grouped).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-        const todayIndex = allDates.findIndex(d => d === today);
-        setCurrentSlide(todayIndex >= 0 ? todayIndex : 0); // ako nema danas, prikaži prvi
+  
+        const allDates = Object.keys(grouped).sort(
+          (a, b) => new Date(a).getTime() - new Date(b).getTime()
+        );
+  
+        const today = new Date();
+        const todayStr = today.toISOString().split("T")[0];
+  
+        // pokušaj prvo naći današnji datum
+        let closestIndex = allDates.findIndex(d => d === todayStr);
+  
+        if (closestIndex === -1 && allDates.length > 0) {
+          // ako danas ne postoji, pronađi najbliži datum
+          let minDiff = Infinity;
+          allDates.forEach((dateStr, idx) => {
+            const diff = Math.abs(new Date(dateStr).getTime() - today.getTime());
+            if (diff < minDiff) {
+              minDiff = diff;
+              closestIndex = idx;
+            }
+          });
+        }
+  
+        setCurrentSlide(closestIndex >= 0 ? closestIndex : 0);
       }
     };
-
+  
     fetchTasks();
   }, [selectedProfileId]);
+  
 
 
 
@@ -300,8 +319,8 @@ export default function TodosPage() {
     const date = new Date(year, month - 1, day);
     const weekday = date.toLocaleDateString("bs-BA", { weekday: "long" });
     const monthName = date.toLocaleDateString("bs-BA", { month: "long" });
-    return `${weekday}, ${day}. ${monthName}`;
-  };
+    return `${weekday}, ${day}. ${monthName} ${date.getFullYear()}`;
+  };  
 
 
 

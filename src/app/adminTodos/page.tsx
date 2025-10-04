@@ -87,52 +87,70 @@ export default function AdminTodosPage() {
   
   useEffect(() => {
     if (!profileIdFromUrl) return;
-
+  
     const fetchTasksAndRevisions = async () => {
       const { data: taskData, error: taskError } = await supabase
         .from("tasks")
         .select("*")
         .eq("profile_id", profileIdFromUrl)
         .order("due_at", { ascending: true });
-
+  
       if (taskError) console.error(taskError);
       else {
         const grouped = groupTasksByDate(taskData || []);
         setTasksByDate(grouped);
-
-        
-        const today = new Date().toISOString().split("T")[0];
+  
         const allDates = Object.keys(grouped).sort(
           (a, b) => new Date(a).getTime() - new Date(b).getTime()
         );
-        const todayIndex = allDates.findIndex(d => d === today);
-        setCurrentSlide(todayIndex >= 0 ? todayIndex : 0);
+  
+        const today = new Date();
+        const todayStr = today.toISOString().split("T")[0];
+  
+        // prvo tražimo današnji datum
+        let closestIndex = allDates.findIndex(d => d === todayStr);
+  
+        if (closestIndex === -1 && allDates.length > 0) {
+          // ako danas ne postoji, tražimo najbliži datum
+          let minDiff = Infinity;
+          allDates.forEach((dateStr, idx) => {
+            const diff = Math.abs(new Date(dateStr).getTime() - today.getTime());
+            if (diff < minDiff) {
+              minDiff = diff;
+              closestIndex = idx;
+            }
+          });
+        }
+  
+        setCurrentSlide(closestIndex >= 0 ? closestIndex : 0);
       }
-
+  
+      // fetch revisions
       const { data: revData, error: revError } = await supabase
         .from("revisions")
         .select("*")
         .eq("profile_id", profileIdFromUrl)
         .order("created_at", { ascending: true });
-
+  
       if (revError) {
         console.error(revError);
         setRevisions([]);
         return;
       }
-
+  
       const { data: allProfiles } = await supabase.from("profiles").select("id, username");
-
+  
       const revWithUsername: Revision[] = (revData || []).map((r) => {
         const prof = allProfiles?.find((p) => p.id === r.profile_id);
         return { ...r, profile_username: prof?.username || "Nepoznat" };
       });
-
+  
       setRevisions(revWithUsername);
     };
-
+  
     fetchTasksAndRevisions();
   }, [profileIdFromUrl]);
+  
 
   const groupTasksByDate = (tasks: Task[]) => {
     const groups: { [date: string]: Task[] } = {};
@@ -291,6 +309,16 @@ export default function AdminTodosPage() {
     setShowRevisionsModal(true);
   };
 
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    const weekday = date.toLocaleDateString("bs-BA", { weekday: "long" });
+    const monthName = date.toLocaleDateString("bs-BA", { month: "long" });
+    return `${weekday}, ${day}. ${monthName} ${date.getFullYear()}`;
+  };
+  
+
   return (
     <div className="task-section">
       <div className="task-card">
@@ -300,11 +328,7 @@ export default function AdminTodosPage() {
           <div className="slider-actions" style={{ marginTop: '2vh' }}>
             <button onClick={goPrev} disabled={currentSlide === 0} className="slider-btn">◀</button>
             <p>
-              {Object.keys(tasksByDate)[currentSlide] && new Date(Object.keys(tasksByDate)[currentSlide]).toLocaleDateString("bs-BA", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
+            {formatDate(Object.keys(tasksByDate)[currentSlide])}
             </p>
             <button onClick={goNext} disabled={currentSlide === Object.keys(tasksByDate).length - 1} className="slider-btn">▶</button>
           </div>
