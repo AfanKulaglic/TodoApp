@@ -174,76 +174,114 @@ export default function AdminTodosPage() {
   const handleAddTask = async () => {
     if (!newTitle.trim() || !profileIdFromUrl) return;
     setLoading(true);
-
+  
     const due_datetime = newDueDate && newDueTime ? new Date(`${newDueDate}T${newDueTime}`) : null;
-
-    const { data, error } = await supabase
-      .from("tasks")
-      .insert([{
-        profile_id: profileIdFromUrl,
-        title: newTitle,
-        description: newDescription,
-        due_at: due_datetime
-      }])
-      .select();
-
-    setLoading(false);
-
-    if (error) console.error(error);
-    else if (data && data[0]) {
-      setTasks([...tasks, data[0]]);
-
-      
-      await supabase.from("revisions").insert([{
-        task_id: data[0].id,
+  
+    // UI instant update
+    const tempId = `temp-${Date.now()}`;
+    const newTask: Task = {
+      id: tempId,
+      profile_id: profileIdFromUrl,
+      title: newTitle,
+      description: newDescription,
+      status: "pending",
+      created_at: new Date().toISOString(),
+      due_at: due_datetime?.toISOString() || null,
+    };
+    setTasks(prev => [...prev, newTask]);
+    setTasksByDate(prev => {
+      const dateKey = due_datetime ? due_datetime.toISOString().split("T")[0] : "no-date";
+      return { ...prev, [dateKey]: prev[dateKey] ? [...prev[dateKey], newTask] : [newTask] };
+    });
+  
+    // asinhrono insert u tasks i revisions
+    try {
+      const { data: insertedTasks, error: taskError } = await supabase
+        .from("tasks")
+        .insert([{ profile_id: profileIdFromUrl, title: newTitle, description: newDescription, due_at: due_datetime }])
+        .select();
+  
+      if (taskError || !insertedTasks || !insertedTasks[0]) throw taskError;
+  
+      const savedTask = insertedTasks[0];
+  
+      // update UI sa stvarnim ID-em
+      setTasks(prev => prev.map(t => t.id === tempId ? savedTask : t));
+      setTasksByDate(prev => {
+        const dateKey = due_datetime ? due_datetime.toISOString().split("T")[0] : "no-date";
+        return { ...prev, [dateKey]: prev[dateKey].map(t => t.id === tempId ? savedTask : t) };
+      });
+  
+      // insert u revisions
+      const { error: revError } = await supabase.from("revisions").insert([{
+        task_id: savedTask.id,
         profile_id: profileIdFromUrl,
         action: "create",
-        changed_data: { title: newTitle, description: newDescription, due_at: due_datetime?.toISOString() }
+        changed_data: { title: newTitle, description: newDescription, due_at: due_datetime?.toISOString() },
+        created_at: new Date().toISOString()
       }]);
+      if (revError) console.error("Revision error:", revError);
+  
+    } catch (err) {
+      console.error(err);
     }
-
+  
+    setLoading(false);
     closeModal();
   };
+  
 
   const toggleTaskStatus = async (task: Task) => {
     const newStatus = task.status === "done" ? "pending" : "done";
-    const { error } = await supabase
-      .from("tasks")
-      .update({ status: newStatus, updated_at: new Date() })
-      .eq("id", task.id);
-
-    if (!error) {
-      setTasksByDate(prev => {
-        const newGroups = { ...prev };
-        for (const date in newGroups) {
-          newGroups[date] = newGroups[date].map(t =>
-            t.id === task.id ? { ...t, status: newStatus } : t
-          );
-        }
-        return newGroups;
-      });
-
+  
+    // UI instant update
+    setTasksByDate(prev => {
+      const newGroups = { ...prev };
+      for (const date in newGroups) {
+        newGroups[date] = newGroups[date].map(t => t.id === task.id ? { ...t, status: newStatus } : t);
+      }
+      return newGroups;
+    });
+  
+    try {
+      await supabase.from("tasks").update({ status: newStatus, updated_at: new Date() }).eq("id", task.id);
+  
       await supabase.from("revisions").insert([{
         task_id: task.id,
         profile_id: profileIdFromUrl,
         action: "update",
-        changed_data: { status: newStatus }
+        changed_data: { status: newStatus },
+        created_at: new Date().toISOString()
       }]);
-    } else console.error(error);
+    } catch (err) {
+      console.error(err);
+    }
   };
+  
 
-  const handleDeleteTask = async (taskId: string) => {
-    const { error } = await supabase.from("tasks").delete().eq("id", taskId);
-    if (!error) {
-      setTasks(tasks.filter(t => t.id !== taskId));
+  const handleDeleteTask = async (task: Task) => {
+    // UI instant remove
+    setTasks(prev => prev.filter(t => t.id !== task.id));
+    setTasksByDate(prev => {
+      const dateKey = task.due_at ? task.due_at.split("T")[0] : "no-date";
+      return { ...prev, [dateKey]: prev[dateKey]?.filter(t => t.id !== task.id) || [] };
+    });
+  
+    try {
+      await supabase.from("tasks").delete().eq("id", task.id);
+  
       await supabase.from("revisions").insert([{
-        task_id: taskId,
+        task_id: task.id,
         profile_id: profileIdFromUrl,
         action: "delete",
-        changed_data: {}
+        changed_data: { title: task.title, description: task.description, status: task.status },
+        created_at: new Date().toISOString()
       }]);
-    } else console.error(error);
+    } catch (err) {
+      console.error(err);
+    }
   };
+  
 
   const startEditingWithModal = (task: Task) => {
     setEditingTaskId(task.id);
@@ -256,34 +294,42 @@ export default function AdminTodosPage() {
 
   const saveEditing = async () => {
     if (!editingTaskId) return;
-
+  
     const due_datetime = editingDueDate && editingDueTime ? new Date(`${editingDueDate}T${editingDueTime}`) : null;
-
-    const { error } = await supabase
-      .from("tasks")
-      .update({
-        title: editingTitle,
-        description: editingDescription,
-        due_at: due_datetime,
-        updated_at: new Date()
-      })
-      .eq("id", editingTaskId);
-
-    if (!error) {
-      setTasks(tasks.map(t =>
-        t.id === editingTaskId ? { ...t, title: editingTitle, description: editingDescription, due_at: due_datetime?.toISOString() } : t
-      ));
-
+  
+    // UI instant update
+    setTasks(prev => prev.map(t =>
+      t.id === editingTaskId ? { ...t, title: editingTitle, description: editingDescription, due_at: due_datetime?.toISOString() } : t
+    ));
+  
+    setTasksByDate(prev => {
+      const dateKey = due_datetime ? due_datetime.toISOString().split("T")[0] : "no-date";
+      const newGroups = { ...prev };
+      for (const date in newGroups) {
+        newGroups[date] = newGroups[date].map(t =>
+          t.id === editingTaskId ? { ...t, title: editingTitle, description: editingDescription, due_at: due_datetime?.toISOString() } : t
+        );
+      }
+      return newGroups;
+    });
+  
+    try {
+      await supabase.from("tasks").update({ title: editingTitle, description: editingDescription, due_at: due_datetime, updated_at: new Date() }).eq("id", editingTaskId);
+  
       await supabase.from("revisions").insert([{
         task_id: editingTaskId,
         profile_id: profileIdFromUrl,
         action: "update",
-        changed_data: { title: editingTitle, description: editingDescription, due_at: due_datetime?.toISOString() }
+        changed_data: { title: editingTitle, description: editingDescription, due_at: due_datetime?.toISOString() },
+        created_at: new Date().toISOString()
       }]);
-
-      closeModal();
-    } else console.error(error);
+    } catch (err) {
+      console.error(err);
+    }
+  
+    closeModal();
   };
+  
 
   const closeModal = () => {
     setModalClosing(true);
@@ -350,7 +396,7 @@ export default function AdminTodosPage() {
 
                     <div className="task-actions">
                       <button onClick={() => startEditingWithModal(task)} className="button button-small">Uredi</button>
-                      <button onClick={() => handleDeleteTask(task.id)} className="button button-small button-danger">Izbriši</button>
+                      <button onClick={() => handleDeleteTask(task)} className="button button-small button-danger">Izbriši</button>
                       <span onClick={() => openRevisionsModal(task)} className="revisions-toggle">📊</span>
                     </div>
                   </li>
